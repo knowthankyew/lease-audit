@@ -7,7 +7,7 @@
   "rules": [
     {
       "id": "FED-FHA-FAM-01",
-      "category": "Disclosures",
+      "category": "General",
       "name": "Fair Housing Act - Familial Status Discrimination",
       "severity": "LikelyUnenforceable",
       "statuteCitation": "42 U.S.C. § 3604(a)",

@@ -50,7 +50,8 @@
       "statuteSummary": "Landlords are prohibited from intentionally preventing a tenant from entering the leased premises except by judicial eviction process (with extremely limited, hyper-strict key replacement procedures). Lockouts without statutory 24-hour key availability incur civil penalties.",
       "officialUrl": "https://statutes.capitol.texas.gov/Docs/PR/htm/PR.92.htm#92.0081",
       "triggerPatterns": [
-        "(?:lockout|change\\s+door\\s+locks|padlock|prevent\\s+entry)[^.\\n]{0,60}(?:without\\s+notice|without\\s+providing\\s+key|immediate\\s+lockout)",
+        "(?:immediate(?:ly)?\\s+)?(?:lockout|change\\s+(?:door\\s+)?locks|pad-?lock|prevent\\s+entry)",
+        "(?:lockout|change\\s+(?:door\\s+)?locks|pad-?lock|prevent\\s+entry)[^.\\n]{0,60}(?:without\\s+notice|without\\s+providing\\s+key|immediate(?:ly)?|without\\s+court|self-help)",
         "tenant\\s+waives\\s+(?:all\\s+)?rights\\s+under\\s+(?:section\\s+)?92\\.0081"
       ],
       "contraIndicatorPatterns": [],
@@ -65,10 +66,30 @@
       "statuteSummary": "A landlord or landlord's agent may not interrupt or cause the interruption of utility service paid directly to the utility company, or submetered electrical or water services, to force payment of rent.",
       "officialUrl": "https://statutes.capitol.texas.gov/Docs/PR/htm/PR.92.htm#92.008",
       "triggerPatterns": [
-        "(?:cut\\s+off|shut\\s+off|disconnect|terminate|interrupt)\\s+(?:water|electricity|gas|utility|utilities)\\s+(?:for\\s+non-payment|if\\s+rent\\s+is\\s+delinquent)"
+        "(?:cut\\s+off|shut\\s+off|disconnect|terminate|interrupt)\\s+(?:[^.\\n]{0,30})?(?:water|electricity|gas|power|utilit\\w+)"
+      ],
+      "contraIndicatorPatterns": [
+        "emergency",
+        "bona\\s+fide\\s+repairs"
+      ],
+      "disputeTemplate": "Under Tex. Prop. Code § 92.008, terminating or interrupting utilities for rent delinquency is strictly prohibited under Texas law."
+    },
+    {
+      "id": "TX-HABIT-REP-05",
+      "category": "HabitabilityRepairs",
+      "name": "Landlord Duty to Repair / Non-Waivable Habitability",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Tex. Prop. Code § 92.052, § 92.056 & § 92.006",
+      "statuteSummary": "Under Tex. Prop. Code § 92.052 and § 92.056, a landlord has a statutory duty to make a diligent effort to repair or remedy any condition that materially affects the physical health or safety of an ordinary tenant. Under Tex. Prop. Code § 92.006(c), this duty cannot be waived by lease agreement, and any lease provision forcing the tenant to accept premises as-is or assume all landlord repair duties is void.",
+      "officialUrl": "https://statutes.capitol.texas.gov/Docs/PR/htm/PR.92.htm#92.056",
+      "triggerPatterns": [
+        "waives?\\s+(?:all\\s+)?(?:landlord\\s+)?duty\\s+to\\s+repair",
+        "tenant\\s+(?:accepts|takes)\\s+premises\\s+(?:in\\s+)?(?:\"?as-is\"?|as\\s+is)[^.\\n]{0,80}(?:waives\\s+repairs|responsible\\s+for\\s+all\\s+repairs)",
+        "tenant\\s+(?:agrees\\s+to\\s+pay|responsible\\s+for)\\s+all\\s+(?:structural\\s+)?repairs\\s+regardless\\s+of\\s+cause",
+        "tenant\\s+waives\\s+(?:all\\s+)?rights\\s+under\\s+(?:subchapter\\s+b|section\\s+92\\.056)"
       ],
       "contraIndicatorPatterns": [],
-      "disputeTemplate": "Under Tex. Prop. Code § 92.008, terminating or interrupting utilities for rent delinquency is strictly prohibited under Texas law."
+      "disputeTemplate": "Under Tex. Prop. Code § 92.006 and § 92.056, a landlord's duty to repair conditions affecting tenant physical health and safety cannot be waived. Clauses transferring structural repair duties or waiving landlord obligations are void under Texas law."
     }
   ]
 }

@@ -33,7 +33,8 @@
       "officialUrl": "https://www.nysenate.gov/legislation/laws/GOB/7-108",
       "triggerPatterns": [
         "(?:thirty|forty-five|sixty|[2-9]\\d|\\d{3})\\s*(?:\\([0-9]+\\)\\s*)?days[^.\\n]{0,80}(?:return|refund|vacat)",
-        "within\\s+(?:thirty|forty-five|sixty|[2-9]\\d)\\s*(?:\\([0-9]+\\)\\s*)?days"
+        "(?:within\\s+)?(?:thirty|forty-five|sixty|[2-9]\\d|\\d{3})\\s*(?:\\([0-9]+\\)\\s*)?days[^.\\n]{0,80}(?:to\\s+)?(?:return|refund|itemiz\\w+|send|furnish)[^.\\n]{0,40}(?:deposit|statement|receipt)",
+        "(?:deposit|refund|itemiz\\w+)[^.\\n]{0,80}(?:within\\s+)?(?:thirty|forty-five|sixty|[2-9]\\d|\\d{3})\\s*(?:\\([0-9]+\\)\\s*)?days"
       ],
       "contraIndicatorPatterns": [
         "14\\s+days",
@@ -46,8 +47,8 @@
       "category": "EntryNotice",
       "name": "Landlord Reasonable Notice of Entry",
       "severity": "LikelyUnenforceable",
-      "statuteCitation": "N.Y. Real Prop. Law § 235-f / AG Guidance",
-      "statuteSummary": "Under New York law and Attorney General guidelines, landlords must provide reasonable advance notice (typically 24 hours) prior to entry for inspection or repairs during reasonable hours. Entering without notice violates tenant's covenant of quiet enjoyment.",
+      "statuteCitation": "N.Y. Real Prop. Law § 235-b / NYC Admin. Code § 27-2008 / Quiet Enjoyment",
+      "statuteSummary": "Under New York common law covenant of quiet enjoyment, RPL § 235-b, NYC Administrative Code § 27-2008, and Attorney General guidelines, landlords must provide reasonable advance written notice (typically 24 hours for inspections, 1 week for repairs) during reasonable business hours. Entering without notice violates tenant rights.",
       "officialUrl": "https://ag.ny.gov/resources/individuals/tenants-rights",
       "triggerPatterns": [
         "(?:enter|access|entry)[^.\\n]{0,80}(?:at\\s+any\\s+(?:time|hour)|without\\s+notice|no\\s+notice)"
@@ -105,6 +106,25 @@
       ],
       "contraIndicatorPatterns": [],
       "disputeTemplate": "Under N.Y. Real Property Law § 235-b, the warranty of habitability is non-waivable. Any clause forcing the tenant to waive habitability or take on structural landlord repairs is void."
+    },
+    {
+      "id": "NY-OCCUP-ROOM-07",
+      "category": "General",
+      "name": "Roommate Law / Unlawful Restrictions on Occupancy",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "N.Y. Real Prop. Law § 235-f",
+      "statuteSummary": "Under N.Y. Real Property Law § 235-f (the 'Roommate Law'), it is unlawful for a landlord to restrict occupancy of an apartment solely to the named tenant. A tenant has the non-waivable right to live with immediate family and one additional occupant (roommate) plus dependent children. Any lease clause waiving or restricting these occupancy rights is void as against public policy.",
+      "officialUrl": "https://www.nysenate.gov/legislation/laws/RPP/235-F",
+      "triggerPatterns": [
+        "(?:no\\s+roommates?|no\\s+additional\\s+occupants?|occupancy\\s+(?:shall\\s+be\\s+)?strictly\\s+limited\\s+to\\s+(?:named|the)\\s+tenant)",
+        "(?:waives?\\s+(?:all\\s+)?rights?\\s+under\\s+(?:section\\s+)?235-f|prohibits?\\s+roommates?)",
+        "(?:unauthorized\\s+occupant|guest\\s+policy)[^.\\n]{0,80}(?:no\\s+other\\s+persons?|immediate\\s+default\\s+if\\s+anyone\\s+else\\s+resides)"
+      ],
+      "contraIndicatorPatterns": [
+        "overcrowding",
+        "legal\\s+occupancy\\s+limit"
+      ],
+      "disputeTemplate": "Under N.Y. Real Property Law § 235-f (the Roommate Law), tenants have the non-waivable right to share the premises with immediate family and an additional occupant. Lease restrictions prohibiting roommates are void under New York law."
     }
   ]
 }

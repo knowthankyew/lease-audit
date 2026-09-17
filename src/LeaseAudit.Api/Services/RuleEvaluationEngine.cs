@@ -9,10 +9,30 @@ public class RuleEvaluationEngine
 {
     private readonly string _dataDirectory;
     private readonly ConcurrentDictionary<string, JurisdictionRules> _rulesCache = new();
+    private static readonly TimeSpan DefaultRegexTimeout = TimeSpan.FromMilliseconds(250);
+    private readonly ConcurrentDictionary<string, Regex?> _compiledRegexCache = new();
 
     public RuleEvaluationEngine(string? dataDirectory = null)
     {
         _dataDirectory = dataDirectory ?? Path.Combine(AppContext.BaseDirectory, "Data");
+    }
+
+    private Regex? GetOrCreateRegex(string pattern)
+    {
+        if (string.IsNullOrWhiteSpace(pattern))
+            return null;
+
+        return _compiledRegexCache.GetOrAdd(pattern, p =>
+        {
+            try
+            {
+                return new Regex(p, RegexOptions.IgnoreCase | RegexOptions.Compiled, DefaultRegexTimeout);
+            }
+            catch
+            {
+                return null;
+            }
+        });
     }
 
     public JurisdictionRules? GetJurisdictionRules(string jurisdiction)
@@ -52,7 +72,7 @@ public class RuleEvaluationEngine
         }
         catch
         {
-            // Log or fallback
+            // Fallback
         }
 
         return null;
@@ -103,34 +123,30 @@ public class RuleEvaluationEngine
         };
     }
 
-    private static void EvaluateClause(Clause clause, List<RuleItem> rules)
+    private void EvaluateClause(Clause clause, List<RuleItem> rules)
     {
-        RuleItem? bestMatch = null;
+        var matchedRules = new List<RuleItem>();
 
         foreach (var rule in rules)
         {
-            // Category match or General
-            bool categoryRelevant = rule.Category == ClauseCategory.General || 
-                                    clause.Category == ClauseCategory.General || 
-                                    rule.Category == clause.Category;
-
-            if (!categoryRelevant)
-                continue;
-
             bool isTriggered = false;
             foreach (var pattern in rule.TriggerPatterns)
             {
+                var regex = GetOrCreateRegex(pattern);
+                if (regex == null)
+                    continue;
+
                 try
                 {
-                    if (Regex.IsMatch(clause.RawText, pattern, RegexOptions.IgnoreCase))
+                    if (regex.IsMatch(clause.RawText))
                     {
                         isTriggered = true;
                         break;
                     }
                 }
-                catch
+                catch (RegexMatchTimeoutException)
                 {
-                    // Ignore regex syntax issue in rule
+                    // ReDoS safeguard: safely bypass timed-out evaluation
                 }
             }
 
@@ -141,42 +157,56 @@ public class RuleEvaluationEngine
             bool contraIndicated = false;
             foreach (var contra in rule.ContraIndicatorPatterns)
             {
+                var contraRegex = GetOrCreateRegex(contra);
+                if (contraRegex == null)
+                    continue;
+
                 try
                 {
-                    if (Regex.IsMatch(clause.RawText, contra, RegexOptions.IgnoreCase))
+                    if (contraRegex.IsMatch(clause.RawText))
                     {
                         contraIndicated = true;
                         break;
                     }
                 }
-                catch
+                catch (RegexMatchTimeoutException)
                 {
-                    // Ignore
+                    // Ignore on timeout
                 }
             }
 
             if (contraIndicated)
                 continue;
 
-            // Determine if this match is higher priority than existing match
-            if (bestMatch == null || rule.Severity > bestMatch.Severity)
-            {
-                bestMatch = rule;
-            }
+            matchedRules.Add(rule);
         }
 
-        if (bestMatch != null)
+        if (matchedRules.Count > 0)
         {
-            clause.Status = bestMatch.Severity;
-            clause.MatchedRuleId = bestMatch.Id;
-            clause.StatuteCitation = bestMatch.StatuteCitation;
-            clause.StatuteSummary = bestMatch.StatuteSummary;
-            clause.OfficialSourceUrl = bestMatch.OfficialUrl;
-            clause.Explanation = bestMatch.StatuteSummary;
+            // Highest severity sets clause status
+            var maxSeverity = matchedRules.Max(r => r.Severity);
+            clause.Status = maxSeverity;
 
-            var disputeText = bestMatch.DisputeTemplate
-                .Replace("{clauseNumber}", clause.SectionNumber ?? clause.Id);
-            clause.DisputeRecommendation = disputeText;
+            // Collect rules that match the maximum severity
+            var topRules = matchedRules.Where(r => r.Severity == maxSeverity).ToList();
+
+            clause.MatchedRuleId = string.Join(", ", topRules.Select(r => r.Id).Distinct());
+            clause.StatuteCitation = string.Join("; ", topRules.Select(r => r.StatuteCitation).Distinct());
+            clause.StatuteSummary = string.Join(" ", topRules.Select(r => r.StatuteSummary).Distinct());
+            clause.OfficialSourceUrl = topRules.First().OfficialUrl;
+            clause.Explanation = string.Join(" ", topRules.Select(r => r.StatuteSummary).Distinct());
+
+            var clauseIdentifier = clause.SectionNumber ?? clause.Id;
+            var recommendations = topRules
+                .Select(r => r.DisputeTemplate.Replace("{clauseNumber}", clauseIdentifier))
+                .Distinct();
+            clause.DisputeRecommendation = string.Join(" ", recommendations);
+
+            // If the clause was generic, adopt the category of the matched rule
+            if (clause.Category == ClauseCategory.General && topRules.Any(r => r.Category != ClauseCategory.General))
+            {
+                clause.Category = topRules.First(r => r.Category != ClauseCategory.General).Category;
+            }
         }
     }
 }

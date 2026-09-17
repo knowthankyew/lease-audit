@@ -590,6 +590,14 @@ Tenant waives all rights under the Servicemembers Civil Relief Act (SCRA). No ea
     letterPreview.textContent = '';
     closeDisputeModal();
 
+    // 3. Clear any potential web storage entries
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      // In sandboxed environments storage might throw
+    }
+
     showToast('All local lease data and session memory purged.');
     announce('All local data and session memory successfully purged.');
 

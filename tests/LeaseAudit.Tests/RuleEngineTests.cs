@@ -98,4 +98,112 @@ public class RuleEngineTests
         Assert.Equal(ClauseSeverity.LikelyUnenforceable, result.Clauses[0].Status);
         Assert.Contains("3604", result.Clauses[0].StatuteCitation);
     }
+
+    [Fact]
+    public void Evaluate_FloridaMiyasLaw_FlagsShortNoticeForRepairs()
+    {
+        var clause = new Clause
+        {
+            Id = "clause-01",
+            Title = "Landlord Access",
+            RawText = "Landlord may enter premises for repairs upon 12 hours notice to tenant.",
+            Category = ClauseCategory.EntryNotice,
+            Status = ClauseSeverity.Standard
+        };
+
+        var result = _engine.Evaluate(new List<Clause> { clause }, "FL");
+        Assert.Equal("FL", result.Jurisdiction);
+        Assert.Equal(ClauseSeverity.LikelyUnenforceable, result.Clauses[0].Status);
+        Assert.Contains("83.53", result.Clauses[0].StatuteCitation);
+    }
+
+    [Fact]
+    public void Evaluate_NewYorkRoommateLaw_FlagsOccupancyRestrictions()
+    {
+        var clause = new Clause
+        {
+            Id = "clause-01",
+            Title = "Occupancy Restriction",
+            RawText = "Occupancy shall be strictly limited to the tenant. No roommates or additional occupants permitted.",
+            Category = ClauseCategory.General,
+            Status = ClauseSeverity.Standard
+        };
+
+        var result = _engine.Evaluate(new List<Clause> { clause }, "NY");
+        Assert.Equal("NY", result.Jurisdiction);
+        Assert.Equal(ClauseSeverity.LikelyUnenforceable, result.Clauses[0].Status);
+        Assert.Contains("235-f", result.Clauses[0].StatuteCitation);
+    }
+
+    [Fact]
+    public void Evaluate_TexasHabitability_FlagsAsIsRepairWaiver()
+    {
+        var clause = new Clause
+        {
+            Id = "clause-01",
+            Title = "Condition of Premises",
+            RawText = "Tenant takes premises as-is and waives landlord duty to repair all conditions.",
+            Category = ClauseCategory.HabitabilityRepairs,
+            Status = ClauseSeverity.Standard
+        };
+
+        var result = _engine.Evaluate(new List<Clause> { clause }, "TX");
+        Assert.Equal("TX", result.Jurisdiction);
+        Assert.Equal(ClauseSeverity.LikelyUnenforceable, result.Clauses[0].Status);
+        Assert.Contains("92.056", result.Clauses[0].StatuteCitation);
+    }
+
+    [Fact]
+    public void Evaluate_IllinoisDepositInterest_FlagsWaiver()
+    {
+        var clause = new Clause
+        {
+            Id = "clause-01",
+            Title = "Security Deposit",
+            RawText = "Deposit shall be held interest-free and tenant waives any interest on the security deposit.",
+            Category = ClauseCategory.SecurityDeposit,
+            Status = ClauseSeverity.Standard
+        };
+
+        var result = _engine.Evaluate(new List<Clause> { clause }, "IL");
+        Assert.Equal("IL", result.Jurisdiction);
+        Assert.Equal(ClauseSeverity.LikelyUnenforceable, result.Clauses[0].Status);
+        Assert.Contains("715/1", result.Clauses[0].StatuteCitation);
+    }
+
+    [Fact]
+    public void Evaluate_DepositCap_DoesNotFalsePositiveOnNoticeClause()
+    {
+        var noticeClause = new Clause
+        {
+            Id = "clause-01",
+            Title = "Notice of Termination",
+            RawText = "Tenant shall provide two months notice in writing before vacating the premises.",
+            Category = ClauseCategory.TerminationRenewal,
+            Status = ClauseSeverity.Standard
+        };
+
+        var result = _engine.Evaluate(new List<Clause> { noticeClause }, "CA");
+        Assert.Equal(ClauseSeverity.Standard, result.Clauses[0].Status);
+        Assert.Null(result.Clauses[0].StatuteCitation);
+    }
+
+    [Fact]
+    public void Evaluate_CompositeViolations_CapturesMultipleStatutes()
+    {
+        var compoundClause = new Clause
+        {
+            Id = "clause-01",
+            Title = "Default Remedies",
+            RawText = "Landlord may immediately padlock doors and cut off water and electricity if rent is unpaid.",
+            Category = ClauseCategory.EvictionLockout,
+            Status = ClauseSeverity.Standard
+        };
+
+        var result = _engine.Evaluate(new List<Clause> { compoundClause }, "TX");
+        Assert.Equal(ClauseSeverity.LikelyUnenforceable, result.Clauses[0].Status);
+        // Should cite both lockout (92.0081) and utility shutoff (92.008)
+        Assert.Contains("92.0081", result.Clauses[0].StatuteCitation);
+        Assert.Contains("92.008", result.Clauses[0].StatuteCitation);
+    }
 }

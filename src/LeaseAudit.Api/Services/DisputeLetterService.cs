@@ -62,47 +62,67 @@ public class DisputeLetterService
             plainSb.AppendLine("Please be advised that under governing statutes, private lease contracts cannot waive statutory rights or enforce terms that violate statutory minimums. I request written confirmation that the following provisions will not be enforced and are considered void:\n");
         }
 
-        int itemIndex = 1;
-        foreach (var clause in request.FlaggedClauses)
+        if (request.FlaggedClauses.Count == 0)
         {
-            var citation = clause.StatuteCitation ?? "Governing Landlord-Tenant Statute";
-            statutes.Add(citation);
-
-            var title = clause.Title ?? $"Clause {clause.SectionNumber ?? clause.Id}";
-            var rawQuote = clause.RawText.Length > 200 
-                ? clause.RawText.Substring(0, 197) + "..." 
-                : clause.RawText;
-
-            // Markdown
-            sb.AppendLine($"#### {itemIndex}. {title} ({citation})");
-            sb.AppendLine($"> \"{rawQuote}\"");
+            sb.AppendLine("*No specific statutory violations were selected for inclusion.*");
             sb.AppendLine();
-            if (!string.IsNullOrWhiteSpace(clause.Explanation))
-            {
-                sb.AppendLine($"*Legal Context:* {clause.Explanation}");
-                sb.AppendLine();
-            }
-            if (!string.IsNullOrWhiteSpace(clause.DisputeRecommendation))
-            {
-                sb.AppendLine($"**Requested Remedy:** {clause.DisputeRecommendation}");
-                sb.AppendLine();
-            }
-
-            // Plain text
-            plainSb.AppendLine($"{itemIndex}. {title} ({citation})");
-            plainSb.AppendLine($"   Quoted provision: \"{rawQuote}\"");
-            if (!string.IsNullOrWhiteSpace(clause.Explanation))
-            {
-                plainSb.AppendLine($"   Legal Context: {clause.Explanation}");
-            }
-            if (!string.IsNullOrWhiteSpace(clause.DisputeRecommendation))
-            {
-                plainSb.AppendLine($"   Requested Remedy: {clause.DisputeRecommendation}");
-            }
-            plainSb.AppendLine();
-
-            itemIndex++;
+            plainSb.AppendLine("[No specific statutory violations were selected for inclusion.]\n");
         }
+        else
+        {
+            int itemIndex = 1;
+            foreach (var clause in request.FlaggedClauses)
+            {
+                var citation = clause.StatuteCitation ?? "Governing Landlord-Tenant Statute";
+                statutes.Add(citation);
+
+                var title = clause.Title ?? $"Clause {clause.SectionNumber ?? clause.Id}";
+                var rawQuote = clause.RawText.Length > 200 
+                    ? clause.RawText.Substring(0, 197) + "..." 
+                    : clause.RawText;
+
+                // Markdown
+                sb.AppendLine($"#### {itemIndex}. {title} ({citation})");
+                foreach (var qLine in rawQuote.Split('\n'))
+                {
+                    sb.AppendLine($"> \"{qLine.Trim()}\"");
+                }
+                sb.AppendLine();
+                if (!string.IsNullOrWhiteSpace(clause.Explanation))
+                {
+                    sb.AppendLine($"*Legal Context:* {clause.Explanation}");
+                    sb.AppendLine();
+                }
+                if (!string.IsNullOrWhiteSpace(clause.DisputeRecommendation))
+                {
+                    sb.AppendLine($"**Requested Remedy:** {clause.DisputeRecommendation}");
+                    sb.AppendLine();
+                }
+
+                // Plain text
+                plainSb.AppendLine($"{itemIndex}. {title} ({citation})");
+                plainSb.AppendLine($"   Quoted provision: \"{rawQuote}\"");
+                if (!string.IsNullOrWhiteSpace(clause.Explanation))
+                {
+                    plainSb.AppendLine($"   Legal Context: {clause.Explanation}");
+                }
+                if (!string.IsNullOrWhiteSpace(clause.DisputeRecommendation))
+                {
+                    plainSb.AppendLine($"   Requested Remedy: {clause.DisputeRecommendation}");
+                }
+                plainSb.AppendLine();
+
+                itemIndex++;
+            }
+        }
+
+        // Reservation of Rights
+        sb.AppendLine("### Reservation of Rights");
+        sb.AppendLine("This communication is submitted in good faith for statutory compliance and amicable resolution, and is delivered without waiver of any statutory, common law, or equitable rights, claims, defenses, or remedies available under federal, state, or municipal law.");
+        sb.AppendLine();
+
+        plainSb.AppendLine("Reservation of Rights\n");
+        plainSb.AppendLine("This communication is submitted in good faith for statutory compliance and amicable resolution, and is delivered without waiver of any statutory, common law, or equitable rights, claims, defenses, or remedies available under federal, state, or municipal law.\n");
 
         // Closing
         sb.AppendLine("### Next Steps");

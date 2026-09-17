@@ -76,5 +76,40 @@ public class DisputeLetterTests
         Assert.Contains("Jordan Lee", result.LetterPlaintext);
         Assert.Contains("N.Y. Real Prop. Law § 238-a(2)", result.LetterPlaintext);
         Assert.Contains("Formal Notice of Unenforceable Lease Provision(s)", result.LetterPlaintext);
+        Assert.Contains("Reservation of Rights", result.LetterPlaintext);
+        Assert.Contains("without waiver of any statutory", result.LetterPlaintext);
+    }
+
+    [Fact]
+    public void GenerateLetter_MultiLineQuote_FormattedWithBlockquotes()
+    {
+        var request = new DisputeRequest
+        {
+            Jurisdiction = "CA",
+            TenantName = "Sam Taylor",
+            LandlordName = "Coastal Living LLC",
+            PropertyAddress = "100 Ocean Blvd, Santa Monica, CA",
+            LetterType = LetterType.PreSigning,
+            FlaggedClauses = new List<Clause>
+            {
+                new Clause
+                {
+                    Id = "clause-01",
+                    Title = "Quiet Enjoyment & Entry",
+                    RawText = "Landlord may enter at any time.\nNo prior notice required under any circumstance.",
+                    Status = ClauseSeverity.LikelyUnenforceable,
+                    StatuteCitation = "Cal. Civ. Code § 1954",
+                    Explanation = "California requires 24 hours written notice.",
+                    DisputeRecommendation = "Stipulate 24-hour written notice."
+                }
+            }
+        };
+
+        var result = _service.GenerateLetter(request);
+
+        Assert.NotNull(result);
+        Assert.Contains("> \"Landlord may enter at any time.\"", result.LetterMarkdown);
+        Assert.Contains("> \"No prior notice required under any circumstance.\"", result.LetterMarkdown);
+        Assert.Contains("Reservation of Rights", result.LetterMarkdown);
     }
 }

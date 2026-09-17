@@ -52,6 +52,25 @@
       ],
       "contraIndicatorPatterns": [],
       "disputeTemplate": "Under 765 ILCS 720/1, lease provisions punishing or restricting a tenant from reporting building code violations to municipal authorities are void as contrary to Illinois public policy."
+    },
+    {
+      "id": "IL-DEP-INT-04",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit Interest Act (25+ Units)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "765 ILCS 715/1",
+      "statuteSummary": "A lessor of residential real property containing 25 or more units who receives a security deposit from a lessee and holds that deposit for more than 6 months shall pay interest annually to the lessee on the deposit at the rate established by the State Treasurer. Any lease waiver of deposit interest in covered buildings is void and unenforceable.",
+      "officialUrl": "https://www.ilga.gov/legislation/ilcs/fulltext.asp?DocName=076507150K1",
+      "triggerPatterns": [
+        "(?:no\\s+interest|waives?\\s+(?:any\\s+)?interest|interest-free)[^.\\n]{0,60}(?:on\\s+(?:the\\s+)?(?:security\\s+)?deposit|held\\s+in\\s+escrow)",
+        "tenant\\s+waives?\\s+(?:all\\s+)?rights?\\s+under\\s+(?:the\\s+)?security\\s+deposit\\s+interest\\s+act",
+        "deposit\\s+(?:shall|will)\\s+not\\s+bear\\s+interest"
+      ],
+      "contraIndicatorPatterns": [
+        "less\\s+than\\s+25\\s+units",
+        "single-family"
+      ],
+      "disputeTemplate": "Under 765 ILCS 715/1 (Security Deposit Interest Act), landlords of buildings containing 25 or more units must pay annual interest on security deposits held over 6 months. Blanket lease waivers of deposit interest in covered properties are unenforceable."
     }
   ]
 }

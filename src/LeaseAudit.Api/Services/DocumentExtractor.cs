@@ -14,20 +14,25 @@ public class DocumentExtractor
 
         return ext switch
         {
-            ".pdf" => ExtractFromPdf(stream),
-            ".docx" => ExtractFromDocx(stream),
+            ".pdf" => await ExtractFromPdfAsync(stream, cancellationToken),
+            ".docx" => await ExtractFromDocxAsync(stream, cancellationToken),
             _ => await ExtractFromPlainTextAsync(stream, cancellationToken)
         };
     }
 
-    public string ExtractFromPdf(Stream stream)
+    public async Task<string> ExtractFromPdfAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         using var memoryStream = new MemoryStream();
-        stream.CopyTo(memoryStream);
+        await stream.CopyToAsync(memoryStream, cancellationToken);
         memoryStream.Position = 0;
 
+        return ExtractFromPdf(memoryStream);
+    }
+
+    public string ExtractFromPdf(Stream stream)
+    {
         var sb = new StringBuilder();
-        using (var document = PdfDocument.Open(memoryStream))
+        using (var document = PdfDocument.Open(stream))
         {
             foreach (var page in document.GetPages())
             {
@@ -43,19 +48,24 @@ public class DocumentExtractor
         return NormalizeText(sb.ToString());
     }
 
-    public string ExtractFromDocx(Stream stream)
+    public async Task<string> ExtractFromDocxAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         using var memoryStream = new MemoryStream();
-        stream.CopyTo(memoryStream);
+        await stream.CopyToAsync(memoryStream, cancellationToken);
         memoryStream.Position = 0;
 
+        return ExtractFromDocx(memoryStream);
+    }
+
+    public string ExtractFromDocx(Stream stream)
+    {
         var sb = new StringBuilder();
-        using (var wordDoc = WordprocessingDocument.Open(memoryStream, false))
+        using (var wordDoc = WordprocessingDocument.Open(stream, false))
         {
             var body = wordDoc.MainDocumentPart?.Document?.Body;
             if (body != null)
             {
-                foreach (var paragraph in body.Elements<Paragraph>())
+                foreach (var paragraph in body.Descendants<Paragraph>())
                 {
                     var text = paragraph.InnerText;
                     if (!string.IsNullOrWhiteSpace(text))
