@@ -1,0 +1,37 @@
+# Build & Binary Outputs
+bin/
+obj/
+out/
+dist/
+
+# Test & Coverage Outputs
+TestResults/
+*.trx
+coverage/
+
+# Node & Playwright
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Local artifacts & recordings
+artifacts/
+scratch/
+*.mp4
+*.gif
+!docs/demo.mp4
+!docs/demo.gif
+
+# Environment / local configs
+*.local
+.env
