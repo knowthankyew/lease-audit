@@ -27,8 +27,11 @@ Thumbs.db
 # Local artifacts & recordings
 artifacts/
 scratch/
+.temp_demo_videos/
 *.mp4
 *.gif
+!demo.mp4
+!demo.gif
 !docs/demo.mp4
 !docs/demo.gif
 !docs/demo.webm
