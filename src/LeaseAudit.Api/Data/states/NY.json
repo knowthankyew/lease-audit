@@ -1,0 +1,110 @@
+{
+  "jurisdiction": "NY",
+  "jurisdictionName": "New York",
+  "statuteVersion": "2026.1",
+  "lastAudited": "2026-09-01",
+  "officialSourceUrl": "https://www.nysenate.gov/legislation/laws",
+  "rules": [
+    {
+      "id": "NY-SEC-DEP-CAP-01",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit 1-Month Cap",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "N.Y. Gen. Oblig. Law § 7-108(1-a)(a)",
+      "statuteSummary": "Under the Housing Stability and Tenant Protection Act (HSTPA), no deposit or advance may exceed the amount of one month's rent. Demanding two months' deposit or first, last, and deposit upfront is strictly illegal.",
+      "officialUrl": "https://www.nysenate.gov/legislation/laws/GOB/7-108",
+      "triggerPatterns": [
+        "(?:two|three|[2-9])\\s+months?(?:['\u2019\\s]*)?rent",
+        "(?:security\\s+deposit|deposit)[^.\\n]{0,100}(?:two|three|[2-9])\\s+months?",
+        "(?:first|last)\\s+month(?:'s)?\\s+rent\\s+and\\s+security\\s+deposit\\s+(?:plus|and)\\s+advance"
+      ],
+      "contraIndicatorPatterns": [
+        "not\\s+to\\s+exceed\\s+one\\s+month"
+      ],
+      "disputeTemplate": "Under N.Y. General Obligations Law § 7-108(1-a)(a), landlords in New York may not request or receive a deposit or advance exceeding one month's rent. Any excess security deposit demand is illegal."
+    },
+    {
+      "id": "NY-SEC-DEP-RET-02",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit Return Timeline (14 Days)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "N.Y. Gen. Oblig. Law § 7-108(1-a)(e)",
+      "statuteSummary": "Within fourteen days after tenant has vacated, landlord shall provide an itemized statement indicating basis for deductions and return remaining deposit. If landlord fails to provide statement within 14 days, landlord forfeits any right to retain any portion.",
+      "officialUrl": "https://www.nysenate.gov/legislation/laws/GOB/7-108",
+      "triggerPatterns": [
+        "(?:thirty|forty-five|sixty|[2-9]\\d|\\d{3})\\s*(?:\\([0-9]+\\)\\s*)?days[^.\\n]{0,80}(?:return|refund|vacat)",
+        "within\\s+(?:thirty|forty-five|sixty|[2-9]\\d)\\s*(?:\\([0-9]+\\)\\s*)?days"
+      ],
+      "contraIndicatorPatterns": [
+        "14\\s+days",
+        "fourteen\\s+days"
+      ],
+      "disputeTemplate": "Under N.Y. General Obligations Law § 7-108(1-a)(e), landlords must provide an itemized statement and refund deposits within 14 days. Failure to do so forfeits all deduction rights."
+    },
+    {
+      "id": "NY-ENTRY-NOT-06",
+      "category": "EntryNotice",
+      "name": "Landlord Reasonable Notice of Entry",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "N.Y. Real Prop. Law § 235-f / AG Guidance",
+      "statuteSummary": "Under New York law and Attorney General guidelines, landlords must provide reasonable advance notice (typically 24 hours) prior to entry for inspection or repairs during reasonable hours. Entering without notice violates tenant's covenant of quiet enjoyment.",
+      "officialUrl": "https://ag.ny.gov/resources/individuals/tenants-rights",
+      "triggerPatterns": [
+        "(?:enter|access|entry)[^.\\n]{0,80}(?:at\\s+any\\s+(?:time|hour)|without\\s+notice|no\\s+notice)"
+      ],
+      "contraIndicatorPatterns": [
+        "emergency"
+      ],
+      "disputeTemplate": "Under New York law and Tenant Protection guidelines, landlords must provide reasonable advance notice prior to entering for inspections or repairs. Demands to enter at any hour without notice violate the covenant of quiet enjoyment."
+    },
+    {
+      "id": "NY-LATE-FEE-03",
+      "category": "LateFees",
+      "name": "Statutory Late Fee Cap ($50 or 5%) & 5-Day Grace Period",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "N.Y. Real Prop. Law § 238-a(2)",
+      "statuteSummary": "No late fee may be charged unless rent is late by at least five days, and the fee cannot exceed fifty dollars or five percent of the monthly rent, whichever is less.",
+      "officialUrl": "https://www.nysenate.gov/legislation/laws/RPP/238-A",
+      "triggerPatterns": [
+        "(?:late\\s+fee|late\\s+charge)[^.\\n]{0,60}(?:(?:[6-9]|[1-9]\\d)%|\\$(?:[6-9]\\d|\\d{3,}))",
+        "(?:if\\s+rent\\s+is\\s+not\\s+paid|delinquent)[^.\\n]{0,60}(?:by\\s+the\\s+(?:1st|2nd|3rd|4th)|prior\\s+to\\s+the\\s+5th)"
+      ],
+      "contraIndicatorPatterns": [
+        "lesser\\s+of\\s+\\$50\\s+or\\s+5%",
+        "5%\\s+or\\s+\\$50,\\s+whichever\\s+is\\s+less"
+      ],
+      "disputeTemplate": "Under N.Y. Real Property Law § 238-a(2), late fees cannot exceed $50 or 5% of monthly rent (whichever is less) and can only be assessed after a mandatory 5-day grace period."
+    },
+    {
+      "id": "NY-EVICT-SLF-04",
+      "category": "EvictionLockout",
+      "name": "Unlawful Eviction Criminalization (Self-Help Prohibition)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "N.Y. Real Prop. Law § 768",
+      "statuteSummary": "Self-help evictions, changing locks, padlock installations, or shutting off utilities without court order are Class A misdemeanors under New York State law carrying criminal and civil penalties from $1,000 to $10,000 per violation.",
+      "officialUrl": "https://www.nysenate.gov/legislation/laws/RPP/768",
+      "triggerPatterns": [
+        "(?:pad-?lock|change\\s+(?:door\\s+)?locks|re-enter|turn\\s+off\\s+heat|turn\\s+off\\s+water|cut\\s+off\\s+power|remove\\s+tenant)[^.\\n]{0,80}(?:without\\s+(?:court|legal)|self-help|immediately)",
+        "waives?\\s+(?:any\\s+)?notice\\s+(?:of\\s+eviction|before\\s+lockout)"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under N.Y. Real Property Law § 768, any self-help eviction or non-judicial lockout is an illegal Class A misdemeanor subjecting the landlord to civil damages of up to $10,000."
+    },
+    {
+      "id": "NY-HABIT-WAR-05",
+      "category": "HabitabilityRepairs",
+      "name": "Statutory Warranty of Habitability (Non-Waivable)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "N.Y. Real Prop. Law § 235-b",
+      "statuteSummary": "Every written or oral lease contains a covenant and warranty that premises are fit for human habitation. Any lease agreement waiving or modifying this warranty is void as contrary to public policy.",
+      "officialUrl": "https://www.nysenate.gov/legislation/laws/RPP/235-B",
+      "triggerPatterns": [
+        "waives?\\s+(?:any\\s+claim\\s+regarding\\s+)?warrant(?:y|ies)\\s+of\\s+habitability",
+        "tenant\\s+waives\\s+section\\s+235-b",
+        "tenant\\s+accepts\\s+premises\\s+as-is\\s+and\\s+assumes\\s+all\\s+structural\\s+repairs"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under N.Y. Real Property Law § 235-b, the warranty of habitability is non-waivable. Any clause forcing the tenant to waive habitability or take on structural landlord repairs is void."
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "jurisdiction": "CA",
+  "jurisdictionName": "California",
+  "statuteVersion": "2026.1",
+  "lastAudited": "2026-09-01",
+  "officialSourceUrl": "https://leginfo.legislature.ca.gov/faces/codes.xhtml",
+  "rules": [
+    {
+      "id": "CA-SEC-DEP-CAP-01",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit Maximum Cap (AB 12)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Cal. Civ. Code § 1950.5(c)",
+      "statuteSummary": "Effective July 1, 2024 (AB 12), a landlord may not demand or receive security, however denominated, in an amount or value in excess of an amount equal to one month's rent (with narrow small-landlord exception allowing up to two months).",
+      "officialUrl": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=1950.5.&lawCode=CIV",
+      "triggerPatterns": [
+        "(?:two|three|four|[2-9])\\s+months?(?:['\u2019\\s]*)?(?:rent)?",
+        "(?:security\\s+deposit|deposit)[^.\\n]{0,100}(?:two|three|four|[2-9])\\s+months?"
+      ],
+      "contraIndicatorPatterns": [
+        "not\\s+exceed\\s+one\\s+month",
+        "equal\\s+to\\s+one\\s+month"
+      ],
+      "disputeTemplate": "Under Cal. Civ. Code § 1950.5(c) (as amended by AB 12), security deposits in California are capped at one month's rent. The demand for a deposit exceeding one month's rent is unlawful."
+    },
+    {
+      "id": "CA-SEC-DEP-RET-02",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit Return Timeline (21 Days)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Cal. Civ. Code § 1950.5(g)",
+      "statuteSummary": "No later than 21 calendar days after tenant has vacated the premises, the landlord must furnish an itemized statement of deductions and return any remaining portion of the deposit. Any clause extending this timeframe beyond 21 days is void.",
+      "officialUrl": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=1950.5.&lawCode=CIV",
+      "triggerPatterns": [
+        "(?:thirty|forty-five|sixty|ninety|[3-9]\\d|\\d{3})\\s*(?:\\([0-9]+\\)\\s*)?(?:calendar\\s*)?days[^.\\n]{0,80}(?:return|refund|surrender|inspect|deduct)",
+        "within\\s+(?:thirty|forty-five|sixty|ninety|[3-9]\\d|\\d{3})\\s*(?:\\([0-9]+\\)\\s*)?days"
+      ],
+      "contraIndicatorPatterns": [
+        "21\\s+days",
+        "twenty-one\\s+days"
+      ],
+      "disputeTemplate": "Under Cal. Civ. Code § 1950.5(g), landlords must return unused security deposits and itemized receipts within 21 calendar days. Clauses purporting to give 30, 45, or 60 days are contrary to California law."
+    },
+    {
+      "id": "CA-ENTRY-NOT-03",
+      "category": "EntryNotice",
+      "name": "Landlord Notice of Entry (24 Hours Written Notice)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Cal. Civ. Code § 1954",
+      "statuteSummary": "Landlords may enter only in specific statutory circumstances (emergencies, necessary repairs, showings) and must provide at least 24 hours reasonable written notice during normal business hours. Clauses claiming entry at any time without notice are void.",
+      "officialUrl": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=1954.&lawCode=CIV",
+      "triggerPatterns": [
+        "(?:enter|access|entry)[^.\\n]{0,80}(?:at\\s+any\\s+time|at\\s+any\\s+hour|without\\s+prior|without\\s+notice)",
+        "waives?\\s+(?:any\\s+)?notice\\s+(?:prior\\s+to|of)\\s+entry"
+      ],
+      "contraIndicatorPatterns": [
+        "except\\s+in\\s+(?:case\\s+of\\s+)?emergency",
+        "24\\s+hours?\\s+written\\s+notice"
+      ],
+      "disputeTemplate": "Under Cal. Civ. Code § 1954, a landlord must provide at least 24 hours advance written notice before entering the dwelling, during normal business hours, except in case of true emergency."
+    },
+    {
+      "id": "CA-EVICT-SLF-04",
+      "category": "EvictionLockout",
+      "name": "Prohibition of Self-Help Evictions and Lockouts",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Cal. Civ. Code § 789.3",
+      "statuteSummary": "Landlords are strictly prohibited from changing locks, blocking tenant entry, terminating utility services, or removing tenant property without judicial process. Violations incur statutory damages up to $100 per day plus actual damages.",
+      "officialUrl": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=789.3.&lawCode=CIV",
+      "triggerPatterns": [
+        "(?:change\\s+(?:door\\s+)?locks|pad-?lock|terminate\\s+utilit\\w+|shut\\s+off\\s+utilit\\w+|cut\\s+off\\s+water|cut\\s+off\\s+power|remove\\s+(?:and\\s+dispose|tenant's?\\s+personal\\s+property|belongings)|re-enter\\s+premises)[^.\\n]{0,100}(?:without\\s+(?:court|judicial|legal)|self-help|immediately)",
+        "re-enter\\s+and\\s+take\\s+possession\\s+without\\s+(?:legal\\s+process|court\\s+order|judicial)"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under Cal. Civ. Code § 789.3, self-help evictions, lockouts, utility terminations, and warrantless seizures of tenant belongings are strictly unlawful and subject to severe civil statutory penalties."
+    },
+    {
+      "id": "CA-HABIT-REP-05",
+      "category": "HabitabilityRepairs",
+      "name": "Implied Warranty of Habitability (Non-Waivable)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Cal. Civ. Code § 1941.1 & § 1942.1",
+      "statuteSummary": "Landlords have a non-waivable duty to provide tenantable housing including effective weatherproofing, plumbing, heating, gas/electric, clean grounds, and trash receptacles. Any lease provision waiving habitability or forcing 'as-is' is void as against public policy.",
+      "officialUrl": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=1941.1.&lawCode=CIV",
+      "triggerPatterns": [
+        "waives?\\s+(?:all\\s+)?(?:implied\\s+)?warrant(?:y|ies)\\s+of\\s+habitability",
+        "(?:strictly\\s+)?\"?as-is\"?\\s+condition[^.\\n]{0,100}(?:tenant\\s+waives|tenant\\s+responsible\\s+for\\s+all)",
+        "tenant\\s+(?:shall|agrees\\s+to)\\s+be\\s+solely\\s+responsible\\s+for\\s+all\\s+(?:repairs|maintenance|roof|plumbing)"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under Cal. Civ. Code § 1941.1 and § 1942.1, the implied warranty of habitability is non-waivable. Any lease provision transferring landlord structural maintenance duties or waiving habitability is void."
+    },
+    {
+      "id": "CA-LATE-FEE-06",
+      "category": "LateFees",
+      "name": "Liquidated Damages / Late Fee Reasonableness",
+      "severity": "Watch",
+      "statuteCitation": "Cal. Civ. Code § 1671(d)",
+      "statuteSummary": "In residential leases, late fees are governed by liquidated damages rules and must represent a reasonable endeavor to estimate actual damages caused by late payment. Excessive or escalating per-day penalty fees are routinely struck down by courts.",
+      "officialUrl": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=1671.&lawCode=CIV",
+      "triggerPatterns": [
+        "(?:late\\s+fee|late\\s+charge)[^.\\n]{0,60}(?:\\$(?:[1-9]\\d{2,}|[2-9]\\d\\d)|(?:1[5-9]|[2-9]\\d)%)",
+        "(?:\\$\\d+\\s+per\\s+day|daily\\s+late\\s+fee|calendar\\s+day\\s+rent\\s+remains)"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under Cal. Civ. Code § 1671, late fees in California residential leases must reflect a reasonable pre-estimate of landlord administrative costs rather than an illegal punitive forfeiture."
+    }
+  ]
+}

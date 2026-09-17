@@ -1,0 +1,57 @@
+{
+  "jurisdiction": "IL",
+  "jurisdictionName": "Illinois",
+  "statuteVersion": "2026.1",
+  "lastAudited": "2026-09-01",
+  "officialSourceUrl": "https://www.ilga.gov/legislation/ilcs/ilcs.asp",
+  "rules": [
+    {
+      "id": "IL-SEC-DEP-RET-01",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit Return Act (30-Day Itemization / 45-Day Return)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "765 ILCS 710/1",
+      "statuteSummary": "For residential rental units in properties containing 5 or more units, a lessor who withholds any deposit for damage must deliver an itemized statement within 30 days of surrender, and must return the balance within 45 days. If no damage is claimed, full deposit must be returned within 45 days.",
+      "officialUrl": "https://www.ilga.gov/legislation/ilcs/fulltext.asp?DocName=076507100K1",
+      "triggerPatterns": [
+        "(?:deposit|security)[^.\\n]{0,60}(?:sixty|ninety|[6-9]\\d|\\d{3})\\s*days\\s+(?:to\\s+return|to\\s+refund|after\\s+surrender)",
+        "within\\s+(?:sixty|ninety|[6-9]\\d)\\s*days[^.\\n]{0,50}(?:return|refund)\\s+(?:the\\s+)?deposit"
+      ],
+      "contraIndicatorPatterns": [
+        "30\\s+days",
+        "45\\s+days"
+      ],
+      "disputeTemplate": "Under 765 ILCS 710/1 (Security Deposit Return Act), landlords in buildings with 5+ units must deliver an itemized statement within 30 days and return the deposit within 45 days. Longer lease provisions are unenforceable."
+    },
+    {
+      "id": "IL-EVICT-SLF-02",
+      "category": "EvictionLockout",
+      "name": "Forcible Entry and Detainer Act (Self-Help Prohibition)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "735 ILCS 5/9-101 et seq.",
+      "statuteSummary": "No person shall make an entry into lands or tenements except in cases where entry is allowed by law, and in such cases, only in a peaceable manner. Lockouts, taking possession by force, or self-help evictions outside court orders are strictly illegal.",
+      "officialUrl": "https://www.ilga.gov/legislation/ilcs/fulltext.asp?DocName=073500050K9-101",
+      "triggerPatterns": [
+        "(?:lockout|change\\s+locks|repossess\\s+premises|padlock)[^.\\n]{0,60}(?:without\\s+court|without\\s+forcible\\s+entry|immediate\\s+possession)",
+        "tenant\\s+waives?\\s+(?:any\\s+)?right\\s+to\\s+judicial\\s+eviction"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under 735 ILCS 5/9-101, Illinois strictly prohibits self-help evictions. Landlords must obtain a judicial order of possession before barring tenant access or changing locks."
+    },
+    {
+      "id": "IL-RETALIAT-03",
+      "category": "General",
+      "name": "Retaliatory Eviction Ban",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "765 ILCS 720/1",
+      "statuteSummary": "It is declared to be against public policy of Illinois for a landlord to terminate or refuse to renew a lease because a tenant has complained to any governmental authority regarding code or ordinance violations.",
+      "officialUrl": "https://www.ilga.gov/legislation/ilcs/fulltext.asp?DocName=076507200K1",
+      "triggerPatterns": [
+        "(?:tenant\\s+agrees\\s+not\\s+to\\s+report|prohibited\\s+from\\s+complaining\\s+to\\s+city|waives\\s+right\\s+to\\s+report\\s+code)",
+        "(?:landlord\\s+may\\s+terminate|immediate\\s+termination)\\s+(?:if\\s+tenant\\s+contacts|upon\\s+tenant\\s+complaint\\s+to\\s+(?:city|building|inspector))"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under 765 ILCS 720/1, lease provisions punishing or restricting a tenant from reporting building code violations to municipal authorities are void as contrary to Illinois public policy."
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "jurisdiction": "TX",
+  "jurisdictionName": "Texas",
+  "statuteVersion": "2026.1",
+  "lastAudited": "2026-09-01",
+  "officialSourceUrl": "https://statutes.capitol.texas.gov/",
+  "rules": [
+    {
+      "id": "TX-SEC-DEP-RET-01",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit 30-Day Return & Accounting",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Tex. Prop. Code § 92.103",
+      "statuteSummary": "The landlord shall refund a security deposit to the tenant on or before the 30th day after the date the tenant surrenders the premises, conditioned on tenant providing a forwarding address. Any clause providing longer is void.",
+      "officialUrl": "https://statutes.capitol.texas.gov/Docs/PR/htm/PR.92.htm#92.103",
+      "triggerPatterns": [
+        "(?:deposit|security)[^.\\n]{0,60}(?:forty-five|sixty|ninety|[4-9]\\d|\\d{3})\\s*days\\s+(?:to\\s+return|to\\s+refund|after\\s+surrender)",
+        "within\\s+(?:forty-five|sixty|ninety|[4-9]\\d)\\s*days[^.\\n]{0,50}(?:return|refund)\\s+(?:the\\s+)?deposit"
+      ],
+      "contraIndicatorPatterns": [
+        "30\\s+days",
+        "thirty\\s+days"
+      ],
+      "disputeTemplate": "Under Tex. Prop. Code § 92.103, landlords must refund the security deposit and furnish an itemized accounting within 30 days of surrender."
+    },
+    {
+      "id": "TX-LATE-FEE-02",
+      "category": "LateFees",
+      "name": "Late Fee Mandatory 2-Day Grace Period & Statutory Caps",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Tex. Prop. Code § 92.019",
+      "statuteSummary": "A landlord may not charge a late fee unless rent has remained unpaid for at least two full days after the due date. In addition, the fee cannot exceed 12% of the monthly rent for 4 units or less, or 10% for structures with 5+ units (unless higher actual damages are proven).",
+      "officialUrl": "https://statutes.capitol.texas.gov/Docs/PR/htm/PR.92.htm#92.019",
+      "triggerPatterns": [
+        "(?:late\\s+fee|late\\s+charge)[^.\\n]{0,60}(?:on\\s+the\\s+(?:2nd|first|1st)\\s+day|immediate\\s+penalty)",
+        "(?:late\\s+fee|late\\s+charge)[^.\\n]{0,60}(?:(?:1[3-9]|[2-9]\\d)%|\\$(?:[2-9]\\d\\d|\\d{4,}))"
+      ],
+      "contraIndicatorPatterns": [
+        "two\\s+full\\s+days",
+        "2\\s+days\\s+grace\\s+period"
+      ],
+      "disputeTemplate": "Under Tex. Prop. Code § 92.019, late fees cannot be assessed until rent is at least two full days overdue, and are legally capped at 10% to 12% of the monthly rent."
+    },
+    {
+      "id": "TX-LOCKOUT-SLF-03",
+      "category": "EvictionLockout",
+      "name": "Prohibition of Unlawful Lockouts and Exclusion",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Tex. Prop. Code § 92.0081",
+      "statuteSummary": "Landlords are prohibited from intentionally preventing a tenant from entering the leased premises except by judicial eviction process (with extremely limited, hyper-strict key replacement procedures). Lockouts without statutory 24-hour key availability incur civil penalties.",
+      "officialUrl": "https://statutes.capitol.texas.gov/Docs/PR/htm/PR.92.htm#92.0081",
+      "triggerPatterns": [
+        "(?:lockout|change\\s+door\\s+locks|padlock|prevent\\s+entry)[^.\\n]{0,60}(?:without\\s+notice|without\\s+providing\\s+key|immediate\\s+lockout)",
+        "tenant\\s+waives\\s+(?:all\\s+)?rights\\s+under\\s+(?:section\\s+)?92\\.0081"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under Tex. Prop. Code § 92.0081, landlord self-help exclusions and lockouts are unlawful. A tenant excluded unlawfully may recover possession and statutory penalties of one month's rent plus $1,000."
+    },
+    {
+      "id": "TX-UTIL-SHUT-04",
+      "category": "EvictionLockout",
+      "name": "Prohibition of Utility Interruption",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Tex. Prop. Code § 92.008",
+      "statuteSummary": "A landlord or landlord's agent may not interrupt or cause the interruption of utility service paid directly to the utility company, or submetered electrical or water services, to force payment of rent.",
+      "officialUrl": "https://statutes.capitol.texas.gov/Docs/PR/htm/PR.92.htm#92.008",
+      "triggerPatterns": [
+        "(?:cut\\s+off|shut\\s+off|disconnect|terminate|interrupt)\\s+(?:water|electricity|gas|utility|utilities)\\s+(?:for\\s+non-payment|if\\s+rent\\s+is\\s+delinquent)"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under Tex. Prop. Code § 92.008, terminating or interrupting utilities for rent delinquency is strictly prohibited under Texas law."
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "jurisdiction": "FED",
+  "jurisdictionName": "Federal Baseline (United States)",
+  "statuteVersion": "2026.1",
+  "lastAudited": "2026-09-01",
+  "officialSourceUrl": "https://www.law.cornell.edu/uscode/text",
+  "rules": [
+    {
+      "id": "FED-FHA-FAM-01",
+      "category": "Disclosures",
+      "name": "Fair Housing Act - Familial Status Discrimination",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "42 U.S.C. § 3604(a)",
+      "statuteSummary": "The Fair Housing Act strictly prohibits discrimination based on familial status, including lease clauses banning children, restricting minors without safety justification, or imposing per-child penalty fees.",
+      "officialUrl": "https://www.law.cornell.edu/uscode/text/42/3604",
+      "triggerPatterns": [
+        "(?:no\\s+children|adults\\s+only|children\\s+(?:not\\s+permitted|prohibited|not\\s+allowed))",
+        "(?:extra\\s+fee|surcharge|additional\\s+rent)\\s+for\\s+(?:children|minors|each\\s+child)"
+      ],
+      "contraIndicatorPatterns": [
+        "housing\\s+for\\s+older\\s+persons",
+        "55\\s+and\\s+older"
+      ],
+      "disputeTemplate": "Under the federal Fair Housing Act (42 U.S.C. § 3604), residential leases cannot discriminate on the basis of familial status. The restriction regarding children or minors in this clause is void under federal law."
+    },
+    {
+      "id": "FED-FHA-DIS-02",
+      "category": "General",
+      "name": "Fair Housing Act - Assistance & Service Animals",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "42 U.S.C. § 3604(f)(3)(B)",
+      "statuteSummary": "Landlords must make reasonable accommodations in rules or policies for individuals with disabilities, including permitting verified service and emotional support animals without charging pet rent or pet deposit fees.",
+      "officialUrl": "https://www.law.cornell.edu/uscode/text/42/3604",
+      "triggerPatterns": [
+        "(?:no\\s+animals|no\\s+pets)\\s+(?:under\\s+any\\s+circumstances|strictly\\s+enforced|including\\s+service\\s+animals|including\\s+support\\s+animals)",
+        "(?:service\\s+animals?|support\\s+animals?|assistance\\s+animals?)\\s+(?:must\\s+pay|subject\\s+to)\\s+(?:pet\\s+deposit|pet\\s+fee|pet\\s+rent)"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under 42 U.S.C. § 3604(f)(3)(B) and federal HUD regulations, assistance and service animals are not pets and cannot be subjected to pet deposits, pet rent, or categorical no-pet bans."
+    },
+    {
+      "id": "FED-SCRA-MIL-03",
+      "category": "TerminationRenewal",
+      "name": "Servicemembers Civil Relief Act (SCRA) - Military Early Termination",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "50 U.S.C. § 3955",
+      "statuteSummary": "Active-duty military personnel who receive deployment or permanent change of station (PCS) orders have the federal right to terminate a residential lease without liquidated damages or early termination penalties.",
+      "officialUrl": "https://www.law.cornell.edu/uscode/text/50/3955",
+      "triggerPatterns": [
+        "(?:no\\s+exception|no\\s+early\\s+termination)\\s+for\\s+military",
+        "waives?\\s+(?:all\\s+)?rights?\\s+under\\s+(?:the\\s+)?(?:scra|servicemembers\\s+civil\\s+relief\\s+act)",
+        "(?:penalty|liquidated\\s+damages)\\s+applies\\s+(?:regardless\\s+of|even\\s+for)\\s+military\\s+deployment"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under 50 U.S.C. § 3955 (Servicemembers Civil Relief Act), servicemembers have an unconditional federal right to terminate a residential lease upon receiving qualifying military orders without penalty."
+    },
+    {
+      "id": "FED-LEAD-DISC-04",
+      "category": "Disclosures",
+      "name": "Residential Lead-Based Paint Hazard Reduction Act",
+      "severity": "Watch",
+      "statuteCitation": "42 U.S.C. § 4852d",
+      "statuteSummary": "Federal law requires landlords renting residential housing built prior to 1978 to disclose known lead-based paint hazards and provide an EPA-approved information pamphlet before signing.",
+      "officialUrl": "https://www.law.cornell.edu/uscode/text/42/4852d",
+      "triggerPatterns": [
+        "lead[\\s-]based\\s+paint",
+        "housing\\s+built\\s+(?:prior\\s+to|before)\\s+1978"
+      ],
+      "contraIndicatorPatterns": [
+        "lead\\s+hazard\\s+information\\s+pamphlet",
+        "protect\\s+your\\s+family\\s+from\\s+lead"
+      ],
+      "disputeTemplate": "Under 42 U.S.C. § 4852d, if the property was constructed prior to 1978, the landlord must provide a lead disclosure statement and EPA disclosure pamphlet."
+    }
+  ]
+}

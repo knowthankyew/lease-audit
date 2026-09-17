@@ -1,0 +1,59 @@
+{
+  "jurisdiction": "FL",
+  "jurisdictionName": "Florida",
+  "statuteVersion": "2026.1",
+  "lastAudited": "2026-09-01",
+  "officialSourceUrl": "http://www.leg.state.fl.us/statutes/",
+  "rules": [
+    {
+      "id": "FL-SEC-DEP-RET-01",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit Return (15 Days / 30 Days Claim)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Fla. Stat. § 83.49(3)(a)",
+      "statuteSummary": "Landlord has 15 days to return the deposit together with interest if not imposing a claim. If imposing a claim for damages, landlord has 30 days to give written certified notice of intention. Landlords who fail to send notice forfeit the right to impose a claim.",
+      "officialUrl": "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&Search_String=&URL=0000-0099/0083/Sections/0083.49.html",
+      "triggerPatterns": [
+        "(?:deposit|security)[^.\\n]{0,60}(?:forty-five|sixty|ninety|[4-9]\\d|\\d{3})\\s*days\\s+(?:to\\s+return|to\\s+refund|to\\s+claim)",
+        "within\\s+(?:forty-five|sixty|ninety|[4-9]\\d)\\s*days[^.\\n]{0,50}(?:return|refund)\\s+(?:the\\s+)?deposit"
+      ],
+      "contraIndicatorPatterns": [
+        "15\\s+days",
+        "30\\s+days"
+      ],
+      "disputeTemplate": "Under Fla. Stat. § 83.49(3)(a), a landlord has 15 days to return the deposit if no claim is made, or 30 days to provide certified written notice of specific itemized deductions. Longer timeframes in the lease are void."
+    },
+    {
+      "id": "FL-ENTRY-NOT-02",
+      "category": "EntryNotice",
+      "name": "Notice of Entry for Repairs (12 Hours Reasonable Notice)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Fla. Stat. § 83.53(2)",
+      "statuteSummary": "The landlord may enter the dwelling unit at any time for the protection or preservation of the premises in emergency. For repairs, reasonable notice is required and is statutorily defined as at least 12 hours prior notice, between 7:30 a.m. and 8:00 p.m.",
+      "officialUrl": "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&Search_String=&URL=0000-0099/0083/Sections/0083.53.html",
+      "triggerPatterns": [
+        "(?:enter|access|inspection)[^.\\n]{0,60}(?:at\\s+any\\s+time\\s+without\\s+notice|without\\s+prior\\s+notice|no\\s+notice\\s+required)",
+        "tenant\\s+waives?\\s+(?:any\\s+)?notice\\s+(?:prior\\s+to|of)\\s+entry"
+      ],
+      "contraIndicatorPatterns": [
+        "12\\s+hours"
+      ],
+      "disputeTemplate": "Under Fla. Stat. § 83.53(2), reasonable notice for entry is defined as at least 12 hours prior to entry between 7:30 a.m. and 8:00 p.m. Blanket waiver of notice is unenforceable."
+    },
+    {
+      "id": "FL-PROHIB-PRAC-03",
+      "category": "EvictionLockout",
+      "name": "Prohibited Practices (Self-Help Eviction & Utility Shutoff)",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "Fla. Stat. § 83.67",
+      "statuteSummary": "A landlord of any dwelling unit shall not cause the termination or interruption of any utility service, prevent tenant from gaining reasonable access by changing locks, or remove outside doors or tenant personal property. Violators are liable for actual damages or 3 months' rent, whichever is greater.",
+      "officialUrl": "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&Search_String=&URL=0000-0099/0083/Sections/0083.67.html",
+      "triggerPatterns": [
+        "(?:terminate|interrupt|cut\\s+off)\\s+(?:utilities|water|electricity|gas)",
+        "(?:change\\s+locks|padlock|remove\\s+outside\\s+doors|remove\\s+tenant\\s+property)[^.\\n]{0,60}(?:without\\s+court|immediate\\s+possession)"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Under Fla. Stat. § 83.67, self-help evictions, changing locks, and cutting off utilities are prohibited practices carrying statutory damages of three months' rent plus attorney's fees."
+    }
+  ]
+}
