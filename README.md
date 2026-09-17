@@ -141,4 +141,4 @@ This launches a headless browser, executes the end-to-end interactive workflow (
 
 ## License
 
-MIT © 2026 Courtlandt Harris. See [LICENSE](LICENSE) for details.
+MIT © 2026 The LeaseAudit Contributors. See [LICENSE](LICENSE) for details.
