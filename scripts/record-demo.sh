@@ -17,14 +17,14 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
-PORT="${PORT:-5173}"
+PORT="${PORT:-3000}"
 URL="http://localhost:${PORT}"
 STARTED_SERVER=false
 
 # 1. Ensure server is running
-if ! curl -s "${URL}/api/health" >/dev/null 2>&1; then
+if ! curl -s "${URL}" >/dev/null 2>&1; then
   echo "🚀 Starting temporary LeaseAudit instance on ${URL}..."
-  dotnet run --project src/LeaseAudit.Api/LeaseAudit.Api.csproj -c Release --urls "${URL}" &
+  npx vite --port "${PORT}" &
   SERVER_PID=$!
   STARTED_SERVER=true
 
@@ -38,7 +38,7 @@ if ! curl -s "${URL}/api/health" >/dev/null 2>&1; then
 
   # Wait for server readiness
   for i in {1..30}; do
-    if curl -s "${URL}/api/health" >/dev/null 2>&1; then
+    if curl -s "${URL}" >/dev/null 2>&1; then
       break
     fi
     sleep 0.5

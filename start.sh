@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # LeaseAudit - Zero-Config Launch Script
-# 100% Local, Air-Gapped Statute-Grounded Lease Analyzer
+# 100% Local, Air-Gapped Statute-Grounded Lease Reality Engine
 # ==============================================================================
 set -euo pipefail
 
-PORT="${PORT:-5173}"
+PORT="${PORT:-3000}"
 URL="http://localhost:${PORT}"
 
 echo "=================================================="
@@ -13,37 +13,39 @@ echo "  ⚖️  LeaseAudit - Local Statute-Grounded Audit"
 echo "  🔒 100% Local & Air-Gapped (Zero PII Egress)"
 echo "=================================================="
 
-# 1. Verify dotnet SDK
-if ! command -v dotnet >/dev/null 2>&1; then
-  echo "❌ Error: .NET SDK is not found. Please install .NET 10 SDK: https://dotnet.microsoft.com/download"
+# 1. Verify Node.js & npm
+if ! command -v node >/dev/null 2>&1; then
+  echo "❌ Error: Node.js is not found. Please install Node.js: https://nodejs.org"
   exit 1
 fi
 
-DOTNET_VERSION=$(dotnet --version)
-echo "✓ .NET SDK detected: ${DOTNET_VERSION}"
+NODE_VERSION=$(node --version)
+echo "✓ Node.js detected: ${NODE_VERSION}"
 
-# 2. Build backend
-echo "🔨 Building LeaseAudit backend..."
-dotnet build src/LeaseAudit.Api/LeaseAudit.Api.csproj -c Release -v q --nologo
+# 2. Install dependencies if needed
+if [ ! -d "node_modules" ]; then
+  echo "📦 Installing dependencies with npm install..."
+  npm install
+fi
 
 # 3. Check if port is in use
 if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-  echo "⚠️  Port ${PORT} is currently in use. Selecting port 5174..."
-  PORT=5174
+  echo "⚠️  Port ${PORT} is currently in use. Selecting port 3001..."
+  PORT=3001
   URL="http://localhost:${PORT}"
 fi
 
-# 4. Launch backend
+# 4. Launch Vite dev server
 echo "🚀 Launching LeaseAudit on ${URL}..."
-dotnet run --project src/LeaseAudit.Api/LeaseAudit.Api.csproj -c Release --no-build --urls "${URL}" &
-API_PID=$!
+npx vite --port "${PORT}" &
+DEV_PID=$!
 
 # Trap signals for graceful shutdown
 cleanup() {
   echo ""
-  echo "🛑 Stopping LeaseAudit (PID: ${API_PID})..."
-  kill -TERM "${API_PID}" 2>/dev/null || true
-  wait "${API_PID}" 2>/dev/null || true
+  echo "🛑 Stopping LeaseAudit (PID: ${DEV_PID})..."
+  kill -TERM "${DEV_PID}" 2>/dev/null || true
+  wait "${DEV_PID}" 2>/dev/null || true
   echo "✓ LeaseAudit stopped cleanly. Session wiped."
   exit 0
 }
@@ -56,7 +58,7 @@ ATTEMPT=0
 READY=false
 
 while [ ${ATTEMPT} -lt ${MAX_ATTEMPTS} ]; do
-  if curl -s "${URL}/api/health" >/dev/null 2>&1; then
+  if curl -s "${URL}" >/dev/null 2>&1; then
     READY=true
     break
   fi
@@ -77,7 +79,7 @@ if [ "${READY}" = "true" ]; then
     xdg-open "${URL}"
   fi
 
-  wait "${API_PID}"
+  wait "${DEV_PID}"
 else
   echo "❌ Error: Server failed to start within timeout."
   exit 1

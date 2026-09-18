@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/LeaseAudit.Api/LeaseAudit.Api.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/LeaseAudit.Tests/LeaseAudit.Tests.csproj" />
-  </Folder>
-</Solution>
