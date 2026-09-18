@@ -1,9 +1,12 @@
 # LeaseAudit ⚖️
 
-**100% local, statute-grounded residential lease auditing tool.** Paste or upload a lease to get an instant breakdown of which clauses are enforceable, which are likely illegal in your jurisdiction, and a generated dispute letter — before you sign or before your landlord tries to enforce something they shouldn't.
+**100% local, statute-grounded residential lease auditing reality engine.** Paste or upload a lease to get an instant breakdown of which clauses are enforceable, which violate governing state and federal landlord-tenant statutes, and a generated dispute letter — before you sign or before your landlord tries to enforce an unlawful term.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![.NET 10](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
+[![React 18](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6.svg)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4-646cff.svg)](https://vitejs.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-Vitest%20Passing-success.svg)](https://vitest.dev/)
 [![Local-First](https://img.shields.io/badge/Privacy-100%25%20Air--Gapped-success.svg)](#privacy--air-gap-guarantee)
 [![WCAG AA](https://img.shields.io/badge/A11y-WCAG%20AA%20Compliant-brightgreen.svg)](#accessibility)
 
@@ -19,34 +22,42 @@ Property management companies rely on this information asymmetry. **LeaseAudit r
 
 ## Core Flow
 
-1. **Ingest:** Paste raw lease text or drop a file (`.pdf`, `.docx`, `.txt`).
-2. **Local Extraction:** In-process text parsing with zero cloud calls and zero PII egress.
+1. **Ingest:** Paste raw lease text or upload a document (`.txt`, `.md`).
+2. **Local In-Browser Extraction:** 100% client-side text parsing with zero backend prerequisites, zero cloud calls, and zero PII/lease egress.
 3. **Clause Segmentation:** Heuristic boundary detection breaks the agreement into discrete clauses.
-4. **Statute Evaluation:** Clauses are checked against verified statutory rules (Federal + 5 core states) and classified:
+4. **Statute Evaluation:** Clauses are checked against 29 verified statutory rules (Federal + 5 core states) and classified:
    - 🟢 **Standard:** Standard terms compliant with statutory baselines.
    - 🟡 **Watch:** Ambiguous or bordering provisions requiring attention.
-   - 🔴 **Likely Unenforceable:** Clauses conflicting with state or federal statutory mandates.
-5. **Dispute Letter Generation:** Instantly drafts an assertive, plain-English letter citing specific code sections (Pre-Signing Amendment Request or Tenancy Dispute Notice).
-6. **Burn Local Data:** One-click button immediately purges all memory, DOM state, and backend buffers.
+   - 🔴 **Likely Unenforceable:** Clauses conflicting with mandatory statutory tenant protections.
+5. **Interactive "📚 Grounded Sources" Modal:** Full transparency into official state and federal statutory codes, legislative history, and government portals.
+6. **Dispute Studio:** Instantly drafts an assertive, formal dispute letter citing specific code sections (Pre-Signing Amendment Request or Tenancy Dispute Notice).
+7. **🔥 Burn Local Data:** One-click button immediately purges all memory, DOM state, and session text.
 
 ---
 
-## Quickstart (Zero-Config)
+## Quickstart (Zero Backend Setup)
 
 ```bash
 # Clone the repository
 git clone https://github.com/knowthankyew/lease-audit.git
 cd lease-audit
 
-# Launch (builds, starts local Kestrel server, opens default browser)
-./start.sh
-```
+# Install dependencies
+npm install
 
-By default, LeaseAudit runs on `http://localhost:5173`.
+# Start local dev server (opens http://localhost:3000)
+npm run dev
+
+# Run automated tests
+npm test
+
+# Build production bundle
+npm run build
+```
 
 ---
 
-## 📺 Interactive Walkthrough (Zero Clicks)
+## 📺 Interactive Walkthrough
 
 ![LeaseAudit Automated Walkthrough](demo.gif)
 
@@ -54,7 +65,7 @@ By default, LeaseAudit runs on `http://localhost:5173`.
 
 ---
 
-## Statute Coverage (MVP Scope)
+## Statute Coverage (29 Grounded Rules)
 
 Every single rule in LeaseAudit is grounded in official, verified statutes:
 
@@ -67,67 +78,40 @@ Every single rule in LeaseAudit is grounded in official, verified statutes:
 | **Florida** | `FL` | - **Fla. Stat. § 83.49(3)(a):** 15-day return / 30-day notice for deposit damage claims.<br>- **Fla. Stat. § 83.53(2):** 24-hour notice of entry for repairs (Miya's Law).<br>- **Fla. Stat. § 83.67:** Prohibited landlord practices (utility termination, lockouts).<br>- **Fla. Stat. § 83.51 & § 83.47:** Non-waivable landlord duty to maintain premises. | [Online Sunshine](http://www.leg.state.fl.us/statutes/) |
 | **Illinois** | `IL` | - **765 ILCS 710/1:** Security Deposit Return Act (30-day itemization, 45-day return).<br>- **765 ILCS 715/1:** Security Deposit Interest Act for buildings with 25+ units.<br>- **735 ILCS 5/9-101 et seq.:** Forcible Entry and Detainer Act (exclusive court remedy; self-help banned).<br>- **765 ILCS 720/1:** Retaliatory eviction and code reporting protection. | [Illinois General Assembly](https://www.ilga.gov/legislation/ilcs/ilcs.asp) |
 
-*See [docs/statutes.md](docs/statutes.md) for the complete statutory audit trace, legislative history, and official citations.*
-
 ---
 
 ## Privacy & Air-Gap Guarantee
 
-- **Zero Cloud Ingestion:** Document parsing (PDF with managed `PdfPig`, Word documents with `DocumentFormat.OpenXml`) executes entirely within the local process.
+- **Zero Cloud Ingestion:** Parsing, segmentation, and evaluation execute 100% inside your browser session.
+- **Zero Remote Telemetry:** No tracking, cookies, or remote analytics.
 - **No IP Geolocation:** Users manually pick their jurisdiction from the dropdown. The application never queries geolocation services or IP lookups.
-- **Burn Local Data:** Clicking the "Burn Local Data" button immediately flushes browser state, clears the DOM, resets all form inputs, and signals the backend (`POST /api/privacy/purge`) to perform immediate garbage collection.
-
----
-
-## Graceful Sidecar Pairing (`event-driven-ftaas`)
-
-LeaseAudit is **fully functional standalone** using deterministic regex and heading heuristics. If an instance of `event-driven-ftaas` or a compatible local model sidecar is active at `http://localhost:8000`, LeaseAudit silently upgrades clause classification quality without errors, timeouts, or UI warnings if it is absent.
+- **🔥 Burn Local Data:** Clicking "Burn Local Data" immediately flushes all browser state, clears session memory, and resets the interface.
 
 ---
 
 ## Accessibility (Day 1 Compliance)
 
 - **Landmarks & Semantics:** HTML5 landmarks (`header`, `main`, `footer`, `section`, `article`).
-- **Live Regions:** Screen reader announcers (`aria-live="polite"`) broadcast document extraction progress, audit completion stats, and dispute actions.
-- **Full Keyboard Navigation:** All controls, filter pills, dropzones, and clause cards respond to `Tab`, `Enter`, and `Space`.
-- **Focus Trapping & Restoration:** Dispute letter modal traps focus while open and restores focus to the trigger button upon dismissal.
-- **Media Queries:** Full native support for `@media (prefers-reduced-motion: reduce)` and `@media (prefers-contrast: more)`.
-- **Contrast:** High-contrast obsidian theme tokens verified against WCAG AA standards.
+- **Live Regions:** Screen reader announcers broadcast audit completion stats and dispute actions.
+- **Full Keyboard Navigation:** All controls, filter pills, and modal dialogs respond to `Tab`, `Enter`, and `Space`.
+- **Focus Trapping & Dismissal:** Modals trap focus while open and restore focus upon dismissal.
+- **High-Contrast Obsidian Palette:** High-contrast tokens verified against WCAG AA standards.
 
 ---
 
-## Testing & Verification
+## Automated Verification Suite
 
-### xUnit Backend & Rule Verification Suite
 ```bash
-dotnet test
+# Run Vitest test suite
+npm test
 ```
+
 Tests cover:
 - Document normalization and heading segmentation.
 - Boundary detection across complex residential leases.
-- Full statutory citation verification (ensuring every rule has an official legal citation and valid regex pattern).
+- Full statutory citation verification (ensuring all 29 rules have official legal citations and valid regex patterns).
 - High-risk clause detection for California, New York, Texas, Florida, Illinois, and Federal rules.
-
-### Playwright End-to-End Suite
-```bash
-cd tests/LeaseAudit.E2E
-npm install
-npx playwright test
-```
-
-### Automated Demo Recording (MP4 & GIF)
-Regenerate the automated video demo and animated preview at any time:
-
-```bash
-./scripts/record-demo.sh
-```
-
-Or run via Node:
-```bash
-node scripts/record-demo.js
-```
-
-This launches a headless browser, executes the end-to-end interactive workflow (sample loading, clause analysis, scorecard filtering, dispute letter customization, and data burning), and encodes web-standard [`demo.mp4`](demo.mp4) (H.264) and animated [`demo.gif`](demo.gif) via FFmpeg.
+- Dispute letter generation for pre-signing amendment requests and active tenancy notices.
 
 ---
 
