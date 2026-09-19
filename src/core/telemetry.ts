@@ -51,11 +51,41 @@ export interface PrivacyAuditReport {
   isLocalOnlyHonest: boolean;
 }
 
-// Prohibited attribute key patterns for consumer privacy protection
-const PROHIBITED_KEYS = [
-  'body', 'text', 'raw', 'content', 'payload', 'lease_text', 'document_body',
-  'email_body', 'paystub_text', 'phi', 'pii', 'medical_note'
-];
+// Explicit allowlist of known-safe telemetry attribute keys.
+// All keys not explicitly allowlisted are redacted by default.
+export const SAFE_ALLOWLIST_KEYS: ReadonlySet<string> = new Set([
+  'rule_id',
+  'rule_ids',
+  'statute_code',
+  'jurisdiction',
+  'status',
+  'risk_level',
+  'duration_ms',
+  'duration_sec',
+  'clause_count',
+  'total_clauses',
+  'flagged_clauses',
+  'flagged_count',
+  'standard_count',
+  'watch_count',
+  'unenforceable_count',
+  'char_count',
+  'matched_violations',
+  'error_code',
+  'job_id',
+  'service',
+  'action',
+  'step',
+  'current_step',
+  'total_steps',
+  'progress_pct',
+  'loss',
+  'device',
+  'adapter_size_bytes',
+  'dataset_hash',
+  'exchange',
+  'routing_key'
+]);
 
 export class MemoryExporter {
   private spans: SpanRecord[] = [];
@@ -115,23 +145,24 @@ export class TelemetryManager {
   }
 
   /**
-   * Sanitizes attributes to ensure no raw body/text leaks into telemetry.
+   * Sanitizes attributes using a strict allowlist.
+   * Any attribute not explicitly registered in SAFE_ALLOWLIST_KEYS is redacted by default.
    */
   public sanitizeAttributes(attrs: Record<string, unknown>): Record<string, string | number | boolean> {
     const sanitized: Record<string, string | number | boolean> = {};
 
     for (const [key, val] of Object.entries(attrs)) {
       const lowerKey = key.toLowerCase();
-      const isProhibited = PROHIBITED_KEYS.some(pk => lowerKey.includes(pk));
+      const isAllowlisted = SAFE_ALLOWLIST_KEYS.has(lowerKey);
 
-      if (isProhibited && !this.config.allowRawPayloads) {
-        // Redact prohibited raw content unless explicitly permitted
-        sanitized[key] = '[REDACTED_BY_PRIVACY_POLICY]';
+      if (!isAllowlisted && !this.config.allowRawPayloads) {
+        // Redact any key not explicitly verified in the allowlist
+        sanitized[key] = '[REDACTED_BY_DEFAULT_ALLOWLIST]';
         continue;
       }
 
       if (typeof val === 'string') {
-        // Reject strings longer than 256 characters unless safe
+        // Length safety backstop: truncate long strings to hash even on allowlisted keys
         if (val.length > 256 && !this.config.allowRawPayloads) {
           sanitized[key] = `[TRUNCATED_HASH_${val.slice(0, 8)}...]`;
         } else {

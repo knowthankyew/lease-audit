@@ -35,11 +35,14 @@ describe('TelemetryManager & Privacy Invariants', () => {
     expect(spans[0].attributes.clause_count).toBe(12);
   });
 
-  it('strictly redacts raw document and lease text attributes from spans', () => {
+  it('strictly redacts any attribute not registered in the safe allowlist', () => {
     const span = tm.startSpan('audit_evaluation', {
       rule_id: 'CA_CIV_1950_5',
       lease_text: 'TENANT MUST SURRENDER DEPOSIT IMMEDIATELY',
       raw_payload: 'SECRET CONFIDENTIAL LEASE CONTENT',
+      matchedText: 'short 40 char snippet of sensitive text',
+      excerpt: 'another clause excerpt',
+      snippet: 'landlord demands immediate entry without notice',
       flagged_count: 2,
     });
     span.end('OK');
@@ -48,11 +51,16 @@ describe('TelemetryManager & Privacy Invariants', () => {
     expect(spans).toHaveLength(1);
     const attrs = spans[0].attributes;
 
+    // Allowlisted keys pass through
     expect(attrs.rule_id).toBe('CA_CIV_1950_5');
     expect(attrs.flagged_count).toBe(2);
-    // Sensitive keys must be redacted
-    expect(attrs.lease_text).toBe('[REDACTED_BY_PRIVACY_POLICY]');
-    expect(attrs.raw_payload).toBe('[REDACTED_BY_PRIVACY_POLICY]');
+
+    // Non-allowlisted keys are strictly redacted by default
+    expect(attrs.lease_text).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
+    expect(attrs.raw_payload).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
+    expect(attrs.matchedText).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
+    expect(attrs.excerpt).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
+    expect(attrs.snippet).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
   });
 
   it('purges all in-memory spans and session audit logs upon burn()', () => {
