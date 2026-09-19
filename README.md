@@ -82,7 +82,7 @@ Every single rule in LeaseAudit is grounded in official, verified statutes:
 
 ## Privacy & Observability Architecture
 
-LeaseAudit strictly adheres to the portfolio standard defined in [PRIVACY_TELEMETRY_SCHEMA.md](../PRIVACY_TELEMETRY_SCHEMA.md):
+LeaseAudit strictly adheres to the portfolio standard defined in [PRIVACY_TELEMETRY_SCHEMA.md](docs/PRIVACY_TELEMETRY_SCHEMA.md):
 
 ### 1. Consumer Default (Safe & Local-Only)
 - **Zero Cloud Ingestion:** Parsing, segmentation, and rule evaluation execute 100% locally inside your browser session.
