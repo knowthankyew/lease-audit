@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, BookOpen, Flame, Activity } from 'lucide-react';
+import { ShieldCheck, BookOpen, Flame, Activity, AlertTriangle } from 'lucide-react';
 import { telemetry } from '../core/telemetry';
 
 interface HeaderProps {
@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPrivacyAudit,
   groundedSourcesCount
 }) => {
-  const auditReport = telemetry.getPrivacyAuditReport();
+  const claims = telemetry.getPrivacyClaims();
 
   return (
     <header className="app-header" role="banner">
@@ -29,25 +29,25 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="brand-title">
           LeaseAudit Studio
-          <span className="brand-badge">Reality Engine</span>
+          {claims.isEnterpriseBuild ? (
+            <span className="brand-badge enterprise">ENTERPRISE (OTLP)</span>
+          ) : (
+            <span className="brand-badge">Reality Engine</span>
+          )}
         </div>
       </div>
 
       <div className="header-meta">
         <button
           type="button"
-          className={`pill-indicator clickable ${auditReport.isLocalOnlyHonest ? 'verified' : ''}`}
+          className={`pill-indicator clickable ${claims.isLocalOnlyHonest ? 'verified' : 'enterprise'}`}
           onClick={onOpenPrivacyAudit}
           title="Inspect real-time telemetry mode, egress policy, and session audit trails"
           style={{ background: 'none', border: 'none', cursor: 'pointer' }}
         >
           <span className="pill-dot"></span>
-          <Activity size={12} />
-          <span>
-            {auditReport.isLocalOnlyHonest
-              ? 'Zero Network • Memory-Only'
-              : `OTLP Active (${auditReport.telemetryMode})`}
-          </span>
+          {claims.isEnterpriseBuild ? <AlertTriangle size={13} color="#f59e0b" /> : <Activity size={12} />}
+          <span>{claims.badgeLabel}</span>
         </button>
 
         <button

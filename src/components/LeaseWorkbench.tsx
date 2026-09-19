@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { FileText, Upload, Search, Trash2 } from 'lucide-react';
 import { JURISDICTION_OPTIONS, SAMPLE_LEASES } from '../data';
+import { telemetry } from '../core/telemetry';
 
 interface LeaseWorkbenchProps {
   rawText: string;
@@ -22,6 +23,7 @@ export const LeaseWorkbench: React.FC<LeaseWorkbenchProps> = ({
   const [activeTab, setActiveTab] = useState<'paste' | 'upload'>('paste');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const claims = telemetry.getPrivacyClaims();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -141,7 +143,7 @@ export const LeaseWorkbench: React.FC<LeaseWorkbenchProps> = ({
                 Click to browse or drop lease document
               </div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                100% Client-Side Local Execution • Zero Network Transmission
+                {claims.dropzoneNotice}
               </div>
             </div>
           ) : (

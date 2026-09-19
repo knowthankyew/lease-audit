@@ -128,4 +128,33 @@ describe('TelemetryManager & Privacy Invariants', () => {
     // But UI audit log is cleared
     expect(enterpriseTm.getAuditLog().length).toBe(0);
   });
+
+  it('provides single source of truth for consumer privacy claims (no false local-only claims in enterprise mode)', () => {
+    // 1. Consumer defaults
+    const consumerClaims = tm.getPrivacyClaims();
+    expect(consumerClaims.isLocalOnlyHonest).toBe(true);
+    expect(consumerClaims.isEnterpriseBuild).toBe(false);
+    expect(consumerClaims.badgeLabel).toBe('Zero Network • Memory-Only');
+    expect(consumerClaims.dropzoneNotice).toContain('100% Client-Side Local Execution');
+    expect(consumerClaims.disclaimerExecutionText).toContain('100% locally');
+    expect(consumerClaims.footerTitle).toContain('100% Local Air-Gapped');
+
+    // 2. Enterprise mode escalation
+    tm.updateConfig({
+      mode: 'otlp',
+      otlpEndpoint: 'https://collector.corp.internal:4318/v1/traces',
+      networkEgress: 'allow_otlp',
+    });
+
+    const enterpriseClaims = tm.getPrivacyClaims();
+    expect(enterpriseClaims.isLocalOnlyHonest).toBe(false);
+    expect(enterpriseClaims.isEnterpriseBuild).toBe(true);
+    expect(enterpriseClaims.badgeLabel).toBe('OTLP Active (otlp)');
+    expect(enterpriseClaims.appTitleSuffix).toBe(' (Enterprise Build)');
+    // Must NOT contain unconditional zero-network claims
+    expect(enterpriseClaims.dropzoneNotice).not.toContain('Zero Network');
+    expect(enterpriseClaims.disclaimerExecutionText).not.toContain('zero remote network transmission');
+    expect(enterpriseClaims.footerTitle).not.toContain('Air-Gapped');
+    expect(enterpriseClaims.dropzoneNotice).toContain('OTLP Operational Metadata Active');
+  });
 });

@@ -3,7 +3,7 @@ import { Header, GroundedSourcesModal, LeaseWorkbench, AuditScorecard, ClauseCar
 import { ClauseSegmenter, RuleEvaluationEngine, telemetry } from './core';
 import { AuditResult } from './contracts';
 import { SAMPLE_LEASES, JURISDICTION_RULES } from './data';
-import { Info } from 'lucide-react';
+import { Info, AlertTriangle } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [scenarioId, setScenarioId] = useState<string>('ca');
@@ -152,13 +152,32 @@ export const App: React.FC = () => {
     return auditResult.clauses.filter((c) => selectedClauseIds.has(c.id));
   }, [auditResult, selectedClauseIds]);
 
+  const claims = telemetry.getPrivacyClaims();
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {claims.isEnterpriseBuild && (
+        <div className="enterprise-persistent-banner" role="alert">
+          <AlertTriangle size={18} style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <strong>Enterprise Mode:</strong> Telemetry exporter active ({claims.badgeLabel}). Operational metadata exported to <code>{claims.otlpEndpoint}</code>. Document content strictly redacted.
+          </div>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+            onClick={() => setIsPrivacyAuditOpen(true)}
+          >
+            Inspect Telemetry
+          </button>
+        </div>
+      )}
+
       <div className="disclaimer-banner" role="note">
         <Info size={16} />
         <span>
-          <strong>Notice:</strong> LeaseAudit is an educational statutory reality engine, not a law firm.
-          All rule evaluations execute 100% locally in your browser with zero remote network transmission.
+          <strong>Notice:</strong> LeaseAudit is an educational statutory reality engine, not a law firm.{' '}
+          {claims.disclaimerExecutionText}
         </span>
       </div>
 
@@ -228,10 +247,10 @@ export const App: React.FC = () => {
       )}
 
       <footer className="footer-wrapper" role="contentinfo">
-        <p><strong>LeaseAudit Studio</strong> — 100% Local Air-Gapped Residential Lease Compliance Engine.</p>
+        <p><strong>LeaseAudit Studio{claims.appTitleSuffix}</strong> — {claims.footerTitle}</p>
         <p>Ground-truth statutory rules across California, New York, Texas, Florida, Illinois, and Federal Law.</p>
         <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
-          Zero Telemetry • Zero Remote PII/Document Egress • Grounded Statutory Realities
+          {claims.footerSubtext}
         </p>
       </footer>
     </div>

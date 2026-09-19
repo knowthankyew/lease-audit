@@ -51,6 +51,52 @@ export interface PrivacyAuditReport {
   isLocalOnlyHonest: boolean;
 }
 
+export interface PrivacyClaims {
+  readonly isLocalOnlyHonest: boolean;
+  readonly isEnterpriseBuild: boolean;
+  readonly appTitleSuffix: string;
+  readonly badgeLabel: string;
+  readonly dropzoneNotice: string;
+  readonly disclaimerExecutionText: string;
+  readonly footerTitle: string;
+  readonly footerSubtext: string;
+  readonly modalStatusTitle: string;
+  readonly modalStatusDescription: string;
+  readonly otlpEndpoint: string | null;
+}
+
+export function getPrivacyClaims(report: PrivacyAuditReport): PrivacyClaims {
+  if (report.isLocalOnlyHonest) {
+    return {
+      isLocalOnlyHonest: true,
+      isEnterpriseBuild: false,
+      appTitleSuffix: '',
+      badgeLabel: 'Zero Network • Memory-Only',
+      dropzoneNotice: '100% Client-Side Local Execution • Zero Network Transmission',
+      disclaimerExecutionText: 'All rule evaluations execute 100% locally in your browser with zero remote network transmission.',
+      footerTitle: '100% Local Air-Gapped Residential Lease Compliance Engine.',
+      footerSubtext: 'Zero Telemetry • Zero Remote PII/Document Egress • Grounded Statutory Realities',
+      modalStatusTitle: '100% Local-First & Private (Memory-Only Telemetry)',
+      modalStatusDescription: 'All computation and telemetry spans remain buffered strictly in volatile memory. No outbound network calls are made. Telemetry purges immediately upon invoking "Burn Local Data".',
+      otlpEndpoint: null,
+    };
+  }
+
+  return {
+    isLocalOnlyHonest: false,
+    isEnterpriseBuild: true,
+    appTitleSuffix: ' (Enterprise Build)',
+    badgeLabel: `OTLP Active (${report.telemetryMode})`,
+    dropzoneNotice: 'Local Document Parsing • OTLP Operational Metadata Active (Strictly Redacted)',
+    disclaimerExecutionText: `Rule evaluations execute in-browser. Scrubbed operational telemetry is exported to configured OTLP endpoint (${report.otlpEndpoint}). Document text is never transmitted.`,
+    footerTitle: 'Enterprise Residential Lease Compliance Engine (OTLP Telemetry Active).',
+    footerSubtext: 'Enterprise Telemetry Mode • Operational Metadata Export Active • Document Bodies Air-Gapped',
+    modalStatusTitle: 'Enterprise OTLP Telemetry Active',
+    modalStatusDescription: `Telemetry spans are exported to configured OTLP endpoint: ${report.otlpEndpoint}. Document text and sensitive fields are redacted via strict allowlist.`,
+    otlpEndpoint: report.otlpEndpoint,
+  };
+}
+
 // Explicit allowlist of known-safe telemetry attribute keys.
 // All keys not explicitly allowlisted are redacted by default.
 export const SAFE_ALLOWLIST_KEYS: ReadonlySet<string> = new Set([
@@ -355,6 +401,13 @@ export class TelemetryManager {
       sessionAuditCount: this.auditLog.length,
       isLocalOnlyHonest: this.config.mode !== 'otlp' && !this.config.otlpEndpoint,
     };
+  }
+
+  /**
+   * Single source of truth for all user-facing privacy claims across the UI.
+   */
+  public getPrivacyClaims(): PrivacyClaims {
+    return getPrivacyClaims(this.getPrivacyAuditReport());
   }
 }
 

@@ -16,6 +16,7 @@ export const PrivacyAuditModal: React.FC<PrivacyAuditModalProps> = ({
   if (!isOpen) return null;
 
   const report: PrivacyAuditReport = telemetry.getPrivacyAuditReport();
+  const claims = telemetry.getPrivacyClaims();
   const auditLogs: readonly SessionAuditEvent[] = telemetry.getAuditLog();
 
   const handleDownloadAudit = () => {
@@ -41,7 +42,7 @@ export const PrivacyAuditModal: React.FC<PrivacyAuditModalProps> = ({
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                background: report.isLocalOnlyHonest ? 'var(--primary)' : 'var(--accent)',
+                background: claims.isLocalOnlyHonest ? 'var(--primary)' : '#d97706',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -52,7 +53,7 @@ export const PrivacyAuditModal: React.FC<PrivacyAuditModalProps> = ({
             </div>
             <div>
               <h2 id="privacy-modal-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
-                Privacy & Telemetry Verification
+                {claims.isEnterpriseBuild ? 'Enterprise Telemetry Verification' : 'Privacy & Telemetry Verification'}
               </h2>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 Inspect real-time telemetry state, data retention, and session audit trails
@@ -76,32 +77,30 @@ export const PrivacyAuditModal: React.FC<PrivacyAuditModalProps> = ({
             style={{
               padding: '1rem',
               borderRadius: '8px',
-              backgroundColor: report.isLocalOnlyHonest ? 'rgba(34, 197, 94, 0.08)' : 'rgba(234, 179, 8, 0.08)',
-              border: `1px solid ${report.isLocalOnlyHonest ? 'rgba(34, 197, 94, 0.25)' : 'rgba(234, 179, 8, 0.25)'}`,
+              backgroundColor: claims.isLocalOnlyHonest ? 'rgba(34, 197, 94, 0.08)' : 'rgba(234, 179, 8, 0.08)',
+              border: `1px solid ${claims.isLocalOnlyHonest ? 'rgba(34, 197, 94, 0.25)' : 'rgba(234, 179, 8, 0.25)'}`,
               marginBottom: '1.25rem',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-              {report.isLocalOnlyHonest ? (
+              {claims.isLocalOnlyHonest ? (
                 <>
                   <CheckCircle size={18} color="#16a34a" />
                   <strong style={{ color: '#16a34a', fontSize: '0.95rem' }}>
-                    100% Local-First & Private (Memory-Only Telemetry)
+                    {claims.modalStatusTitle}
                   </strong>
                 </>
               ) : (
                 <>
                   <AlertTriangle size={18} color="#ca8a04" />
                   <strong style={{ color: '#ca8a04', fontSize: '0.95rem' }}>
-                    Enterprise OTLP Telemetry Active
+                    {claims.modalStatusTitle}
                   </strong>
                 </>
               )}
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              {report.isLocalOnlyHonest
-                ? 'All computation and telemetry spans remain buffered strictly in volatile memory. No outbound network calls are made. Telemetry purges immediately upon invoking "Burn Local Data".'
-                : `Telemetry spans are exported to configured OTLP endpoint: ${report.otlpEndpoint}. Document text and sensitive fields remain redacted.`}
+              {claims.modalStatusDescription}
             </div>
           </div>
 

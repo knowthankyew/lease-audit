@@ -87,6 +87,28 @@ body {
   border: 0;
 }
 
+/* Enterprise Banner */
+.enterprise-persistent-banner {
+  background: linear-gradient(90deg, #78350f, #92400e);
+  border-bottom: 2px solid #f59e0b;
+  color: #fef3c7;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 50;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+}
+
+.enterprise-persistent-banner code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  color: #fbbf24;
+}
+
 /* Disclaimer Banner */
 .disclaimer-banner {
   background-color: #0b192c;
@@ -157,6 +179,12 @@ body {
   letter-spacing: 0.05em;
 }
 
+.brand-badge.enterprise {
+  background-color: rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.7);
+  color: #fef08a;
+}
+
 .header-meta {
   display: flex;
   align-items: center;
@@ -174,6 +202,12 @@ body {
   background-color: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
+}
+
+.pill-indicator.enterprise {
+  background-color: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fef08a;
 }
 
 .pill-indicator.clickable {
