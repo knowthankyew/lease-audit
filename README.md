@@ -80,12 +80,22 @@ Every single rule in LeaseAudit is grounded in official, verified statutes:
 
 ---
 
-## Privacy & Air-Gap Guarantee
+## Privacy & Observability Architecture
 
-- **Zero Cloud Ingestion:** Parsing, segmentation, and evaluation execute 100% inside your browser session.
-- **Zero Remote Telemetry:** No tracking, cookies, or remote analytics.
-- **No IP Geolocation:** Users manually pick their jurisdiction from the dropdown. The application never queries geolocation services or IP lookups.
-- **🔥 Burn Local Data:** Clicking "Burn Local Data" immediately flushes all browser state, clears session memory, and resets the interface.
+LeaseAudit strictly adheres to the portfolio standard defined in [PRIVACY_TELEMETRY_SCHEMA.md](../PRIVACY_TELEMETRY_SCHEMA.md):
+
+### 1. Consumer Default (Safe & Local-Only)
+- **Zero Cloud Ingestion:** Parsing, segmentation, and rule evaluation execute 100% locally inside your browser session.
+- **In-Memory Volatile Telemetry:** Telemetry runs via an OpenTelemetry-compatible `MemoryExporter`. Spans and metrics reside solely in memory buffers.
+- **Payload Redaction:** Raw lease text, document bodies, and tenant notes are strictly scrubbed from span attributes (only rule IDs, counts, durations, and hashes are retained).
+- **Session Audit Log:** Downloadable append-only audit trail (`Download session audit (JSON)`) in the Privacy verification modal.
+- **🔥 Burn Local Data:** Clicking "Burn Local Data" immediately wipes all browser state, clears session memory, purges telemetry buffers, and resets the tracer to no-op.
+
+### 2. Enterprise Overlay (Opt-In Observability)
+Enterprises deploying LeaseAudit within their own infrastructure can attach an OpenTelemetry collector without code modifications:
+- **Configure Collector:** Set `VITE_OTEL_EXPORTER_OTLP_ENDPOINT` (e.g. `https://otel-collector:4318/v1/traces`).
+- **Telemetry Retention:** Set `privacy.burn_enabled: false` if enterprise policy requires retaining trace streams across UI resets.
+- **Audit Honesty:** The header indicator and Privacy Verification modal honestly reflect whether the app is in `Zero Network • Memory-Only` or `OTLP Active` mode.
 
 ---
 

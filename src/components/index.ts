@@ -4,3 +4,4 @@ export * from './LeaseWorkbench';
 export * from './AuditScorecard';
 export * from './ClauseCardGrid';
 export * from './DisputeStudioModal';
+export * from './PrivacyAuditModal';

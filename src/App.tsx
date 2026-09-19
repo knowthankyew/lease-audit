@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Header, GroundedSourcesModal, LeaseWorkbench, AuditScorecard, ClauseCardGrid, DisputeStudioModal } from './components';
-import { ClauseSegmenter, RuleEvaluationEngine } from './core';
+import { Header, GroundedSourcesModal, LeaseWorkbench, AuditScorecard, ClauseCardGrid, DisputeStudioModal, PrivacyAuditModal } from './components';
+import { ClauseSegmenter, RuleEvaluationEngine, telemetry } from './core';
 import { AuditResult } from './contracts';
 import { SAMPLE_LEASES, JURISDICTION_RULES } from './data';
 import { Info } from 'lucide-react';
@@ -14,6 +14,7 @@ export const App: React.FC = () => {
   const [selectedClauseIds, setSelectedClauseIds] = useState<Set<string>>(new Set());
   const [isGroundedSourcesOpen, setIsGroundedSourcesOpen] = useState<boolean>(false);
   const [isDisputeStudioOpen, setIsDisputeStudioOpen] = useState<boolean>(false);
+  const [isPrivacyAuditOpen, setIsPrivacyAuditOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -38,6 +39,12 @@ export const App: React.FC = () => {
     }
 
     setIsLoading(true);
+    const span = telemetry.startSpan('evaluate_lease_rules', { jurisdiction, char_count: rawText.length });
+    telemetry.recordAuditEvent('document_ingested', `Ingested lease document (${rawText.length} chars)`, {
+      jurisdiction,
+      char_count: rawText.length,
+    });
+
     setTimeout(() => {
       const clauses = segmenter.segment(rawText);
       const result = engine.evaluate(clauses, jurisdiction);
@@ -52,6 +59,18 @@ export const App: React.FC = () => {
       }
       setSelectedClauseIds(flagged);
       setIsLoading(false);
+
+      const flaggedCount = result.summary.watchCount + result.summary.unenforceableCount;
+      telemetry.recordAuditEvent('rules_evaluated', `Evaluated ${result.summary.totalClauses} clauses against ${result.jurisdictionName} statutes`, {
+        total_clauses: result.summary.totalClauses,
+        flagged_clauses: flaggedCount,
+      });
+
+      span.end('OK', {
+        total_clauses: result.summary.totalClauses,
+        flagged_clauses: flaggedCount,
+      });
+
       showToast(`Audit complete: ${result.summary.totalClauses} clauses analyzed against ${result.jurisdictionName} statutes.`);
     }, 100);
   }, [rawText, jurisdiction, segmenter, engine, showToast]);
@@ -62,6 +81,7 @@ export const App: React.FC = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleScenarioChange = (id: string) => {
+    telemetry.restartSession();
     setScenarioId(id);
     if (id === 'custom') {
       setRawText('');
@@ -82,16 +102,18 @@ export const App: React.FC = () => {
         }
       }
       setSelectedClauseIds(flagged);
+      telemetry.recordAuditEvent('document_ingested', `Loaded scenario: ${s.title}`, { jurisdiction: s.jurisdiction });
       showToast(`Loaded ${s.title}`);
     }
   };
 
   const handlePurgeData = () => {
+    telemetry.burn();
     setRawText('');
     setAuditResult(null);
     setSelectedClauseIds(new Set());
     setScenarioId('custom');
-    showToast('🔥 All local lease data wiped from memory.');
+    showToast('🔥 All local lease data & telemetry wiped from memory.');
   };
 
   const handleToggleClauseSelect = (id: string) => {
@@ -145,6 +167,7 @@ export const App: React.FC = () => {
         onScenarioChange={handleScenarioChange}
         onPurgeData={handlePurgeData}
         onOpenGroundedSources={() => setIsGroundedSourcesOpen(true)}
+        onOpenPrivacyAudit={() => setIsPrivacyAuditOpen(true)}
         groundedSourcesCount={totalGroundedSources}
       />
 
@@ -180,6 +203,12 @@ export const App: React.FC = () => {
       <GroundedSourcesModal
         isOpen={isGroundedSourcesOpen}
         onClose={() => setIsGroundedSourcesOpen(false)}
+      />
+
+      <PrivacyAuditModal
+        isOpen={isPrivacyAuditOpen}
+        onClose={() => setIsPrivacyAuditOpen(false)}
+        onBurnData={handlePurgeData}
       />
 
       {auditResult && (

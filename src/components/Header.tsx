@@ -1,11 +1,13 @@
 import React from 'react';
-import { ShieldCheck, BookOpen, Flame } from 'lucide-react';
+import { ShieldCheck, BookOpen, Flame, Activity } from 'lucide-react';
+import { telemetry } from '../core/telemetry';
 
 interface HeaderProps {
   scenarioId: string;
   onScenarioChange: (id: string) => void;
   onPurgeData: () => void;
   onOpenGroundedSources: () => void;
+  onOpenPrivacyAudit: () => void;
   groundedSourcesCount: number;
 }
 
@@ -14,8 +16,11 @@ export const Header: React.FC<HeaderProps> = ({
   onScenarioChange,
   onPurgeData,
   onOpenGroundedSources,
+  onOpenPrivacyAudit,
   groundedSourcesCount
 }) => {
+  const auditReport = telemetry.getPrivacyAuditReport();
+
   return (
     <header className="app-header" role="banner">
       <div className="brand-section">
@@ -29,10 +34,21 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="header-meta">
-        <div className="pill-indicator verified" title="All computations execute client-side with zero cloud calls">
+        <button
+          type="button"
+          className={`pill-indicator clickable ${auditReport.isLocalOnlyHonest ? 'verified' : ''}`}
+          onClick={onOpenPrivacyAudit}
+          title="Inspect real-time telemetry mode, egress policy, and session audit trails"
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+        >
           <span className="pill-dot"></span>
-          <span>Zero Network Transmission</span>
-        </div>
+          <Activity size={12} />
+          <span>
+            {auditReport.isLocalOnlyHonest
+              ? 'Zero Network • Memory-Only'
+              : `OTLP Active (${auditReport.telemetryMode})`}
+          </span>
+        </button>
 
         <button
           type="button"
