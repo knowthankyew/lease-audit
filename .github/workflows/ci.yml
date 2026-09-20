@@ -32,6 +32,9 @@ jobs:
     - name: Typecheck
       run: npx tsc --noEmit
 
+    - name: Validate Declarative Policy Packs (Track 2)
+      run: npm run validate:policies
+
     - name: Run Tests
       run: npm test
 

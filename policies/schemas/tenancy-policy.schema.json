@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowthankyew.org/schemas/v1/tenancy-policy.schema.json",
+  "title": "TenancyPolicyPack",
+  "description": "Declarative policy schema for residential lease auditing and landlord-tenant statutes",
+  "type": "object",
+  "required": [
+    "jurisdiction",
+    "jurisdictionName",
+    "statuteVersion",
+    "lastAudited",
+    "officialSourceUrl",
+    "rules"
+  ],
+  "properties": {
+    "jurisdiction": { "type": "string" },
+    "jurisdictionName": { "type": "string" },
+    "statuteVersion": { "type": "string" },
+    "lastAudited": { "type": "string" },
+    "officialSourceUrl": { "type": "string" },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "name",
+          "severity",
+          "statuteCitation",
+          "statuteSummary",
+          "officialUrl",
+          "triggerPatterns",
+          "contraIndicatorPatterns",
+          "disputeTemplate"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "category": {
+            "type": "string",
+            "enum": [
+              "SecurityDeposit",
+              "LateFees",
+              "EntryNotice",
+              "HabitabilityRepairs",
+              "EvictionLockout",
+              "TerminationRenewal",
+              "Disclosures",
+              "General"
+            ]
+          },
+          "name": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["Standard", "Watch", "LikelyUnenforceable"]
+          },
+          "statuteCitation": { "type": "string" },
+          "statuteSummary": { "type": "string" },
+          "officialUrl": { "type": "string" },
+          "triggerPatterns": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "contraIndicatorPatterns": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "disputeTemplate": { "type": "string" }
+        }
+      }
+    }
+  }
+}

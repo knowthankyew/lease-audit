@@ -1,0 +1,24 @@
+{
+  "$schema": "../schemas/tenancy-policy.schema.json",
+  "jurisdiction": "XX",
+  "jurisdictionName": "State Name",
+  "statuteVersion": "2026.1",
+  "lastAudited": "2026-09-01",
+  "officialSourceUrl": "https://...",
+  "rules": [
+    {
+      "id": "XX-SEC-DEP-01",
+      "category": "SecurityDeposit",
+      "name": "Security Deposit Rule Name",
+      "severity": "LikelyUnenforceable",
+      "statuteCitation": "State Civ. Code § ...",
+      "statuteSummary": "Statute explanation...",
+      "officialUrl": "https://...",
+      "triggerPatterns": [
+        "trigger\\s+pattern\\s+regex"
+      ],
+      "contraIndicatorPatterns": [],
+      "disputeTemplate": "Dispute letter template text under State Civ. Code § ..."
+    }
+  ]
+}
