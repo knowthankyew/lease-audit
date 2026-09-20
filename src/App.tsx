@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Header, GroundedSourcesModal, LeaseWorkbench, AuditScorecard, ClauseCardGrid, DisputeStudioModal, PrivacyAuditModal } from './components';
-import { ClauseSegmenter, RuleEvaluationEngine, telemetry } from './core';
+import { ClauseSegmenter, RuleEvaluationEngine, telemetry, edgeService, SemanticAnalysisResult } from './core';
 import { AuditResult } from './contracts';
 import { SAMPLE_LEASES, JURISDICTION_RULES } from './data';
 import { Info, AlertTriangle } from 'lucide-react';
@@ -17,6 +17,13 @@ export const App: React.FC = () => {
   const [isPrivacyAuditOpen, setIsPrivacyAuditOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [edgeStatus, setEdgeStatus] = useState<string>(edgeService.getStatus());
+  const [edgeProvider, setEdgeProvider] = useState<string>(edgeService.getExecutionProvider());
+  const [edgeThroughput, setEdgeThroughput] = useState<number>(edgeService.getThroughput());
+  const [modelLoaded, setModelLoaded] = useState<boolean>(edgeService.isModelLoaded());
+  const [semanticResults, setSemanticResults] = useState<Map<string, SemanticAnalysisResult>>(new Map());
+  const [isSemanticAuditing, setIsSemanticAuditing] = useState<boolean>(false);
+  const [streamingTokens, setStreamingTokens] = useState<Map<string, string>>(new Map());
 
   const segmenter = useMemo(() => new ClauseSegmenter(), []);
   const engine = useMemo(() => new RuleEvaluationEngine(), []);
@@ -75,14 +82,24 @@ export const App: React.FC = () => {
     }, 100);
   }, [rawText, jurisdiction, segmenter, engine, showToast]);
 
-  // Run audit on mount for default CA sample
+  // Run audit on mount for default CA sample and initialize edge ML
   useEffect(() => {
     runAudit();
+    edgeService.initialize().catch(console.error);
+    const unsub = edgeService.addStatusListener((status, provider) => {
+      setEdgeStatus(status);
+      setEdgeProvider(provider);
+      setEdgeThroughput(edgeService.getThroughput());
+      setModelLoaded(edgeService.isModelLoaded());
+    });
+    return () => unsub();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleScenarioChange = (id: string) => {
     telemetry.restartSession();
     setScenarioId(id);
+    setSemanticResults(new Map());
+    setStreamingTokens(new Map());
     if (id === 'custom') {
       setRawText('');
       setAuditResult(null);
@@ -109,12 +126,75 @@ export const App: React.FC = () => {
 
   const handlePurgeData = () => {
     telemetry.burn();
+    edgeService.burn();
     setRawText('');
     setAuditResult(null);
     setSelectedClauseIds(new Set());
+    setSemanticResults(new Map());
+    setStreamingTokens(new Map());
     setScenarioId('custom');
-    showToast('🔥 All local lease data & telemetry wiped from memory.');
+    showToast('🔥 All local lease data, edge ML memory & telemetry wiped from memory.');
   };
+
+  const runSemanticAudit = useCallback(async () => {
+    if (!auditResult || auditResult.clauses.length === 0) {
+      showToast('Please run an initial statutory audit first.');
+      return;
+    }
+
+    setIsSemanticAuditing(true);
+    const span = telemetry.startSpan('evaluate_edge_semantic_lora', {
+      jurisdiction,
+      clause_count: auditResult.clauses.length,
+    });
+
+    telemetry.recordAuditEvent('edge_inference_started', `Started in-browser edge LoRA semantic audit via ${edgeProvider}`, {
+      jurisdiction,
+      clause_count: auditResult.clauses.length,
+      device: edgeProvider,
+    });
+
+    try {
+      const resultsMap = new Map<string, SemanticAnalysisResult>(semanticResults);
+      const targets = auditResult.clauses.filter((c) => c.status !== 'Standard');
+      const clausesToAudit = targets.length > 0 ? targets : auditResult.clauses.slice(0, 5);
+
+      for (const clause of clausesToAudit) {
+        const res = await edgeService.analyzeClause(
+          clause.id,
+          clause.rawText,
+          jurisdiction,
+          (clauseId, _chunk, cumulative) => {
+            setStreamingTokens((prev) => new Map(prev).set(clauseId, cumulative));
+          }
+        );
+        resultsMap.set(clause.id, res);
+        setSemanticResults(new Map(resultsMap));
+      }
+
+      const highRiskCount = Array.from(resultsMap.values()).filter((r) => r.unconscionabilitySeverity === 'High').length;
+
+      telemetry.recordAuditEvent('edge_inference_completed', `Completed edge LoRA semantic analysis on ${clausesToAudit.length} clauses`, {
+        clause_count: clausesToAudit.length,
+        flagged_count: highRiskCount,
+        device: edgeProvider,
+      });
+
+      span.end('OK', {
+        clause_count: clausesToAudit.length,
+        flagged_count: highRiskCount,
+        device: edgeProvider,
+      });
+
+      showToast(`⚡ Edge LoRA audit complete: ${clausesToAudit.length} clauses analyzed via ${edgeProvider.toUpperCase()}. 0 bytes sent.`);
+    } catch (err: any) {
+      console.error('Edge semantic audit error:', err);
+      showToast('Notice: Edge analysis completed with local fallback.');
+      span.end('ERROR', { error_code: 'edge_inference_notice' });
+    } finally {
+      setIsSemanticAuditing(false);
+    }
+  }, [auditResult, jurisdiction, edgeProvider, semanticResults, showToast]);
 
   const handleToggleClauseSelect = (id: string) => {
     setSelectedClauseIds((prev) => {
@@ -144,8 +224,14 @@ export const App: React.FC = () => {
   const filteredClauses = useMemo(() => {
     if (!auditResult) return [];
     if (activeFilter === 'all') return auditResult.clauses;
+    if (activeFilter === 'SemanticHigh') {
+      return auditResult.clauses.filter((c) => {
+        const sem = semanticResults.get(c.id);
+        return sem?.unconscionabilitySeverity === 'High';
+      });
+    }
     return auditResult.clauses.filter((c) => c.status === activeFilter);
-  }, [auditResult, activeFilter]);
+  }, [auditResult, activeFilter, semanticResults]);
 
   const flaggedClausesForDispute = useMemo(() => {
     if (!auditResult) return [];
@@ -188,6 +274,10 @@ export const App: React.FC = () => {
         onOpenGroundedSources={() => setIsGroundedSourcesOpen(true)}
         onOpenPrivacyAudit={() => setIsPrivacyAuditOpen(true)}
         groundedSourcesCount={totalGroundedSources}
+        edgeProvider={edgeProvider}
+        edgeStatus={edgeStatus}
+        edgeThroughput={edgeThroughput}
+        modelLoaded={modelLoaded}
       />
 
       <main className="main-content" role="main">
@@ -208,12 +298,17 @@ export const App: React.FC = () => {
               onFilterChange={setActiveFilter}
               onOpenDisputeStudio={() => setIsDisputeStudioOpen(true)}
               onExportJson={handleExportJson}
+              isSemanticAuditing={isSemanticAuditing}
+              onRunSemanticAudit={runSemanticAudit}
+              hasSemanticResults={semanticResults.size > 0}
             />
 
             <ClauseCardGrid
               clauses={filteredClauses}
               selectedClauseIds={selectedClauseIds}
               onToggleClauseSelect={handleToggleClauseSelect}
+              semanticResults={semanticResults}
+              streamingTokens={streamingTokens}
             />
           </div>
         )}

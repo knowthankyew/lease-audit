@@ -1,6 +1,6 @@
 import React from 'react';
 import { AuditResult } from '../contracts';
-import { Mail, Download, ShieldAlert } from 'lucide-react';
+import { Mail, Download, ShieldAlert, Zap } from 'lucide-react';
 
 interface AuditScorecardProps {
   result: AuditResult;
@@ -8,6 +8,9 @@ interface AuditScorecardProps {
   onFilterChange: (filter: string) => void;
   onOpenDisputeStudio: () => void;
   onExportJson: () => void;
+  isSemanticAuditing?: boolean;
+  onRunSemanticAudit?: () => void;
+  hasSemanticResults?: boolean;
 }
 
 export const AuditScorecard: React.FC<AuditScorecardProps> = ({
@@ -15,7 +18,10 @@ export const AuditScorecard: React.FC<AuditScorecardProps> = ({
   activeFilter,
   onFilterChange,
   onOpenDisputeStudio,
-  onExportJson
+  onExportJson,
+  isSemanticAuditing = false,
+  onRunSemanticAudit,
+  hasSemanticResults = false
 }) => {
   const { summary } = result;
 
@@ -59,6 +65,23 @@ export const AuditScorecard: React.FC<AuditScorecardProps> = ({
         </div>
 
         <div className="scorecard-actions">
+          {onRunSemanticAudit && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={onRunSemanticAudit}
+              disabled={isSemanticAuditing}
+              title="Run client-side semantic analysis for hidden waivers and equitable counter-amendments"
+              style={{ borderColor: 'rgba(16, 185, 129, 0.5)', color: '#10b981' }}
+            >
+              <Zap size={15} color="#10b981" />
+              {isSemanticAuditing
+                ? 'Running Semantic Audit...'
+                : hasSemanticResults
+                ? 'Re-Run Semantic Audit'
+                : 'Deep Semantic Audit (Edge)'}
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-primary"
@@ -115,6 +138,16 @@ export const AuditScorecard: React.FC<AuditScorecardProps> = ({
           >
             Standard ({summary.standardCount})
           </button>
+          {hasSemanticResults && (
+            <button
+              type="button"
+              className={`filter-pill ${activeFilter === 'SemanticHigh' ? 'active' : ''}`}
+              onClick={() => onFilterChange('SemanticHigh')}
+              style={{ borderColor: 'rgba(16, 185, 129, 0.5)', color: activeFilter === 'SemanticHigh' ? '#10b981' : undefined }}
+            >
+              ⚡ Semantic High Risk
+            </button>
+          )}
         </div>
       </div>
     </div>

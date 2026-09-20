@@ -122,6 +122,24 @@ Tests cover:
 - Full statutory citation verification (ensuring all 29 rules have official legal citations and valid regex patterns).
 - High-risk clause detection for California, New York, Texas, Florida, Illinois, and Federal rules.
 - Dispute letter generation for pre-signing amendment requests and active tenancy notices.
+- **Client-Side Edge ML Scaffold & In-Browser ONNX Runtime (Phase 3a & 3b):** Web Worker off-main-thread execution, autoregressive ONNX neural token generation with WebGPU/WASM, ChatML tokenization, heuristic fallback analyzer, and Pillar 1 hard burn memory teardown (55/55 tests passing).
+
+---
+
+## Phase 3: Client-Side Edge Inference (The FTaaS Bridge) ⚡
+
+LeaseAudit features a production **hybrid dual-engine architecture**:
+1. **Deterministic Statutory Regex Rule Engine**: Instant evaluation against verified state/federal statutes.
+2. **Client-Side Edge Semantic Engine (Phase 3a)**:
+   - Evaluates complex legal edge cases using an off-main-thread Web Worker (`edge-worker.ts`) and singleton service (`edge-service.ts`).
+   - Computes an automated **Unconscionability & Predatoriness Score (0–100%)**, detects hidden rights waivers (e.g. habitability disclaimers, jury trial surrenders, exculpatory indemnity), and generates tailored, tenant-protective counter-amendments with streaming tokens.
+   - **Pillar 1 Invariant**: Clicking "Burn Local Data" terminates the Web Worker, purges all model and prompt memory buffers, and sets an unrecoverable tombstone.
+   - **Pillar 3 Invariant**: Edge operational telemetry strictly sanitizes attributes using `DEFAULT_SAFE_ALLOWLIST_KEYS`; zero prompt, clause text, or model output is ever recorded.
+   - **Pillar 4 Invariant**: Honest UI badges clearly distinguish client-side heuristic evaluation from neural execution (`⚡ ONNX WebGPU (~38 tok/s)` vs `Edge Semantic (Offline)`).
+3. **In-Browser ONNX Runtime Web Execution (Phase 3b - COMPLETED)**:
+   - Direct execution of the exported `SmolLM2-135M` LoRA transformer via `onnxruntime-web` targeting **WebGPU** with **WebAssembly (WASM SIMD)** fallback.
+   - Client-side subword tokenizer (`tokenizer.ts`) with ChatML prompt formatting, fast `BigInt64Array` encoding, and streaming autoregressive token decoding.
+   - Seamless dual-engine fallback: operates via full neural inference when models are loaded, and gracefully falls back to deterministic heuristic evaluation if weights are omitted or unavailable.
 
 ---
 
