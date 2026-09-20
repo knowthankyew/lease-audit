@@ -20,6 +20,9 @@ jobs:
         node-version: 22
         cache: 'npm'
 
+    - name: Checkout Shared Privacy Telemetry
+      run: git clone --depth 1 https://github.com/knowthankyew/privacy-telemetry.git ../privacy-telemetry
+
     - name: Install Dependencies
       run: npm ci
 
