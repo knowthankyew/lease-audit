@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Header, GroundedSourcesModal, LeaseWorkbench, AuditScorecard, ClauseCardGrid, DisputeStudioModal, PrivacyAuditModal } from './components';
+import { Header, GroundedSourcesModal, LeaseWorkbench, AuditScorecard, ClauseCardGrid, DisputeStudioModal, PrivacyAuditModal, HandoffBanner } from './components';
 import { ClauseSegmenter, RuleEvaluationEngine, telemetry, edgeService, SemanticAnalysisResult } from './core';
 import { AuditResult } from './contracts';
 import { SAMPLE_LEASES, JURISDICTION_RULES } from './data';
 import { Info, AlertTriangle } from 'lucide-react';
+import { useKTYHandoff } from '@knowthankyew/privacy-telemetry/react';
+import { mapHandoffToLeaseAuditResult } from './core/handoff-adapter';
 
 export const App: React.FC = () => {
   const [scenarioId, setScenarioId] = useState<string>('ca');
@@ -82,9 +84,25 @@ export const App: React.FC = () => {
     }, 100);
   }, [rawText, jurisdiction, segmenter, engine, showToast]);
 
+  const { payload: handoffPayload, isHandoffActive, clearHandoff } = useKTYHandoff('lease-audit');
+
   // Run audit on mount for default CA sample and initialize edge ML
   useEffect(() => {
-    runAudit();
+    if (handoffPayload) {
+      const result = mapHandoffToLeaseAuditResult(handoffPayload, jurisdiction);
+      setAuditResult(result);
+      const flagged = new Set<string>();
+      for (const c of result.clauses) {
+        if (c.status !== 'Standard') {
+          flagged.add(c.id);
+        }
+      }
+      setSelectedClauseIds(flagged);
+      showToast(`Handoff lease loaded from ${handoffPayload.domain} (${result.clauses.length} clauses).`);
+    } else {
+      runAudit();
+    }
+
     edgeService.initialize().catch(console.error);
     const unsub = edgeService.addStatusListener((status, provider) => {
       setEdgeStatus(status);
@@ -93,7 +111,20 @@ export const App: React.FC = () => {
       setModelLoaded(edgeService.isModelLoaded());
     });
     return () => unsub();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [handoffPayload]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (handoffPayload) {
+      const result = mapHandoffToLeaseAuditResult(handoffPayload, jurisdiction);
+      setAuditResult(result);
+    }
+  }, [jurisdiction, handoffPayload]);
+
+  const handleClearHandoff = () => {
+    clearHandoff();
+    setRawText(SAMPLE_LEASES.ca.text);
+    setTimeout(() => runAudit(), 50);
+  };
 
   const handleScenarioChange = (id: string) => {
     telemetry.restartSession();
@@ -125,6 +156,7 @@ export const App: React.FC = () => {
   };
 
   const handlePurgeData = () => {
+    clearHandoff();
     telemetry.burn();
     edgeService.burn();
     setRawText('');
@@ -281,14 +313,18 @@ export const App: React.FC = () => {
       />
 
       <main className="main-content" role="main">
-        <LeaseWorkbench
-          rawText={rawText}
-          jurisdiction={jurisdiction}
-          onTextChange={setRawText}
-          onJurisdictionChange={setJurisdiction}
-          onRunAudit={runAudit}
-          isLoading={isLoading}
-        />
+        {isHandoffActive && handoffPayload ? (
+          <HandoffBanner payload={handoffPayload} onClear={handleClearHandoff} />
+        ) : (
+          <LeaseWorkbench
+            rawText={rawText}
+            jurisdiction={jurisdiction}
+            onTextChange={setRawText}
+            onJurisdictionChange={setJurisdiction}
+            onRunAudit={runAudit}
+            isLoading={isLoading}
+          />
+        )}
 
         {auditResult && (
           <div>
