@@ -1,9 +1,27 @@
-const path = require('path');
-const fs = require('fs');
-const { execSync } = require('child_process');
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
+import { createRequire } from 'module';
 
-// Require chromium from tests/LeaseAudit.E2E
-const { chromium } = require(path.join(__dirname, '..', 'tests', 'LeaseAudit.E2E', 'node_modules', '@playwright', 'test'));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+let chromium;
+try {
+  chromium = require('playwright').chromium;
+} catch {
+  try {
+    chromium = require('playwright-core').chromium;
+  } catch {
+    try {
+      chromium = require(path.join(__dirname, '../../paystub-check/node_modules/playwright')).chromium;
+    } catch {
+      chromium = require(path.join(__dirname, '../../knowthankyew-extension/node_modules/playwright-core')).chromium;
+    }
+  }
+}
 
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -16,6 +34,7 @@ async function sleep(ms) {
 
   const destMp4 = path.join(repoRoot, 'demo.mp4');
   const destGif = path.join(repoRoot, 'demo.gif');
+  const port = process.env.PORT || '3000';
 
   console.log('🎬 Launching Playwright browser for automated LeaseAudit demo recording...');
   const browser = await chromium.launch({
@@ -33,17 +52,17 @@ async function sleep(ms) {
 
   const page = await context.newPage();
 
-  console.log('Step 1: Navigating to LeaseAudit UI (http://localhost:5173)...');
-  await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+  console.log(`Step 1: Navigating to LeaseAudit UI (http://localhost:${port})...`);
+  await page.goto(`http://localhost:${port}/`, { waitUntil: 'networkidle' });
   await sleep(1500);
 
   console.log('Step 2: Loading California Sample Lease with Predatory Clauses...');
-  await page.click('button[data-sample="ca"]');
+  await page.click('button.btn-sample:has-text("California")');
   await sleep(1500);
 
   console.log('Step 3: Initiating Local Statute-Grounded Audit...');
-  await page.click('#btn-run-audit');
-  await page.waitForSelector('#results-section.active', { state: 'visible', timeout: 10000 });
+  await page.click('button.btn-primary:has-text("Run Lease Audit")');
+  await page.waitForSelector('.scorecard-bar', { state: 'visible', timeout: 10000 });
   await sleep(2000);
 
   console.log('Step 4: Inspecting Risk Scorecards and Stat Badges...');
@@ -51,7 +70,7 @@ async function sleep(ms) {
   await sleep(2500);
 
   console.log('Step 5: Filtering for Likely Unenforceable Clauses...');
-  await page.click('button[data-filter="LikelyUnenforceable"]');
+  await page.click('button.filter-pill:has-text("Unenforceable")');
   await sleep(2000);
 
   console.log('Step 6: Showcasing Cal. Civ. Code § 1950.5 and § 1954 Citations...');
@@ -61,8 +80,8 @@ async function sleep(ms) {
   console.log('Step 7: Opening Interactive Dispute Letter Generator...');
   await page.evaluate(() => window.scrollTo({ top: 180, behavior: 'smooth' }));
   await sleep(1000);
-  await page.click('#btn-open-dispute');
-  await page.waitForSelector('#dispute-modal.active', { state: 'visible', timeout: 5000 });
+  await page.click('button:has-text("Draft Dispute Letter")');
+  await page.waitForSelector('.modal-container', { state: 'visible', timeout: 5000 });
   await sleep(1500);
 
   console.log('Step 8: Customizing Tenant, Landlord, and Address fields...');
@@ -74,45 +93,55 @@ async function sleep(ms) {
   await sleep(2500);
 
   console.log('Step 9: Demonstrating 1-Click Copy with Toast Notification...');
-  await page.click('#btn-copy-letter');
+  await page.click('button:has-text("Copy Letter")');
   await sleep(1800);
 
   // Close Dispute Modal
-  await page.click('#btn-close-modal');
+  await page.click('button.btn-close');
   await sleep(1200);
 
   console.log('Step 10: Demonstrating "Burn Local Data" Session Memory Wiping...');
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
   await sleep(1000);
-  await page.click('#btn-burn-data');
+  await page.click('button.btn-purge');
   await sleep(2500);
 
   console.log('Step 11: Loading New York Sample Lease (HSTPA & Roommate Law)...');
-  await page.click('button[data-sample="ny"]');
+  await page.click('button.btn-sample:has-text("New York")');
   await sleep(1200);
-  await page.click('#btn-run-audit');
-  await page.waitForSelector('#results-section.active', { state: 'visible', timeout: 10000 });
+  await page.click('button.btn-primary:has-text("Run Lease Audit")');
+  await page.waitForSelector('.scorecard-bar', { state: 'visible', timeout: 10000 });
   await sleep(2000);
 
   await page.evaluate(() => window.scrollBy({ top: 260, behavior: 'smooth' }));
   await sleep(3000);
 
   console.log('Closing browser and finalizing video stream...');
+  const video = page.video();
   await page.close();
   await context.close();
   await browser.close();
 
-  // Find recorded WebM
-  const videoFiles = fs.readdirSync(tempVideoDir).filter(f => f.endsWith('.webm'));
-  if (videoFiles.length === 0) {
-    console.error('❌ Error: No recorded WebM video found.');
-    return;
+  let latestVideo = null;
+  if (video) {
+    try {
+      latestVideo = await video.path();
+    } catch (e) {
+      console.warn('video.path() wait failed:', e.message);
+    }
   }
-
-  const latestVideo = path.join(tempVideoDir, videoFiles[videoFiles.length - 1]);
+  if (!latestVideo || !fs.existsSync(latestVideo) || fs.statSync(latestVideo).size === 0) {
+    const videoFiles = fs.readdirSync(tempVideoDir).filter(f => f.endsWith('.webm'));
+    if (videoFiles.length === 0) {
+      console.error('❌ Error: No recorded WebM video found.');
+      return;
+    }
+    latestVideo = path.join(tempVideoDir, videoFiles[videoFiles.length - 1]);
+  }
 
   // Locate ffmpeg
   const candidateFfmpeg = [
+    '/Users/cl0rkster/Dev/gradcast/src/web/node_modules/ffmpeg-static/ffmpeg',
     '/Users/cl0rkster/Dev/ml/src/FtaaSService.Worker/.venv/lib/python3.12/site-packages/imageio_ffmpeg/binaries/ffmpeg-macos-x86_64-v7.1',
     '/opt/homebrew/bin/ffmpeg',
     '/usr/local/bin/ffmpeg',
