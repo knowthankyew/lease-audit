@@ -203,7 +203,7 @@ export const App: React.FC = () => {
                   const req = indexedDB.deleteDatabase(name);
                   req.onsuccess = () => resolve();
                   req.onerror = () => reject(req.error || new Error(`Failed to delete database ${name}`));
-                  req.onblocked = () => resolve();
+                  req.onblocked = () => reject(new Error(`IndexedDB database deletion blocked: ${name}`));
                 } catch (err) {
                   reject(err);
                 }

@@ -35,11 +35,11 @@ jobs:
     - name: Validate Declarative Policy Packs (Track 2)
       run: npm run validate:policies
 
-    - name: Audit Documentation & Architectural Claims
-      run: npm run audit:claims
-
     - name: Run Tests
       run: npm test
+
+    - name: Audit Documentation & Architectural Claims
+      run: npm run audit:claims
 
     - name: Build Application
       run: npm run build

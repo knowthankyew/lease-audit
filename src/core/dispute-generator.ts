@@ -132,7 +132,14 @@ export class DisputeLetterGenerator {
     plainLines.push('I value a transparent, compliant, and professional landlord-tenant relationship and look forward to promptly resolving these items. Please provide your written response or revised lease agreement within five (5) business days of receipt.\n');
     plainLines.push('Sincerely,\n');
     plainLines.push(`${tenantName}`);
-    plainLines.push(`${address}`);
+    plainLines.push(`${address}\n`);
+
+    // Legal Disclaimer Footer
+    mdLines.push('---');
+    mdLines.push('*Notice: This communication was prepared with the assistance of an automated statutory analysis engine and does not constitute formal legal advice.*');
+
+    plainLines.push('---');
+    plainLines.push('Notice: This communication was prepared with the assistance of an automated statutory analysis engine and does not constitute formal legal advice.');
 
     return {
       letterMarkdown: mdLines.join('\n'),
