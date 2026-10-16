@@ -1,0 +1,95 @@
+# CodeRabbit Configuration for LeaseAudit
+# Targeted Scope: Residential Lease Audit, Statutory Tenancy Compliance, In-Browser ONNX Neural Inference, Zero-Egress Privacy & Supply Chain Assurance
+
+language: "en-US"
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  sequence_diagrams: true
+  auto_review:
+    enabled: true
+    drafts: false
+
+  # Filter out compiled distributions, media files, demo recordings, and local caches
+  path_filters:
+    - "!**/*.mp4"
+    - "!**/*.gif"
+    - "!**/*.webm"
+    - "!**/*.png"
+    - "!**/*.svg"
+    - "!dist/**"
+    - "!node_modules/**"
+    - "!bom.json"
+    - "!dist/bom.json"
+    - "!demo.gif"
+    - "!demo.mp4"
+
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        You are performing an exhaustive architectural, security, legal, and data privacy audit for "LeaseAudit", an open-source, local-first residential lease auditing engine evaluating tenant agreements against federal and state landlord-tenant statutes.
+
+        Evaluate all code against these non-negotiable architectural invariants:
+
+        1. ZERO LEASE/PII NETWORK TRANSMISSION & AIR-GAPPED PRIVACY (CRITICAL):
+           - In `src/**`, strictly prohibit network egress primitives (`fetch`, `XMLHttpRequest`, `navigator.sendBeacon`, WebSocket, external scripts/analytics). All document normalization, clause segmentation, statutory rule evaluation, ONNX neural inference, and dispute letter generation must execute 100% locally within the tenant's browser runtime.
+           - Enforce strict Content Security Policy (CSP) in `index.html` restricting `connect-src` to loopback and local OTLP endpoints (`'self' http://localhost:* http://127.0.0.1:* http://otel-collector:*`).
+           - In `src/core/telemetry.ts`, verify telemetry runs in `memory_only` mode with `MemoryExporter` by default. Operational attributes must strictly adhere to `DEFAULT_SAFE_ALLOWLIST_KEYS`. Raw lease text, tenant names, landlord names, property addresses, and dispute bodies are strictly prohibited from telemetry spans or audit events.
+           - Nuclear Amnesia / "Burn Local Data": Ensure the instant purge command completely terminates active edge workers (`edgeService.burn()`), purges ONNX model tensors and prompt memory, wipes telemetry buffers (`telemetry.burn()`), and clears all client storage (`localStorage`, `sessionStorage`, `caches`, `indexedDB`).
+
+        2. STATUTORY TENANCY POLICY PACKS & LEGAL GROUNDING:
+           - In `src/core/rule-engine.ts` and `policies/jurisdictions/**`:
+             - Federal Fair Housing Act (42 U.S.C. §§ 3604(a), 3604(f)(3)(B)), SCRA (50 U.S.C. § 3955), and Lead Paint Act (42 U.S.C. § 4852d) form the universal federal baseline.
+             - State Tenancy Codes must accurately cite official statutes:
+               - California: Cal. Civ. Code § 1950.5(c) (1-month deposit cap under AB 12), § 1950.5(g) (21-day return), § 1954 (24h entry notice), § 789.3 (lockout ban), §§ 1941.1 & 1942.1 (habitability warranty), § 1671 (late fees).
+               - New York: N.Y. Gen. Oblig. Law § 7-108(1-a)(a) (HSTPA 1-month deposit cap), § 7-108(1-a)(e) (14-day return), Real Prop. Law § 238-a(2) ($50/5% late fee cap), § 768 (unlawful eviction), § 235-b (habitability), § 235-f (Roommate Law).
+               - Texas: Tex. Prop. Code § 92.103 (30-day return), § 92.019 (2-day grace period, 10-12% cap), § 92.0081 (lockout ban), § 92.008 (utility shutoff ban), §§ 92.056 & 92.006 (repair duty).
+               - Florida: Fla. Stat. § 83.49(3)(a) (15-day return / 30-day claim), § 83.53(2) (Miya's Law 24h entry notice), § 83.67 (prohibited practices), §§ 83.51 & 83.47 (habitability).
+               - Illinois: 765 ILCS 710/1 (Deposit Return Act 30/45-day), 735 ILCS 5/9-101 (detainer/lockout ban), 765 ILCS 720/1 (retaliatory eviction ban), 765 ILCS 715/1 (Deposit Interest Act for 25+ units).
+             - Verify compiled rule regex patterns are executed safely without ReDoS vulnerabilities.
+
+        3. IN-BROWSER ONNX RUNTIME & EDGE SEMANTIC INFERENCE (PHASE 3a & 3b):
+           - In `src/core/edge-inference/**`:
+             - Off-main-thread Web Worker (`edge-worker.ts`) and singleton service (`edge-service.ts`) execute client-side neural token generation and unconscionability scoring.
+             - Ensure graceful fallback between ONNX runtime (`onnxruntime-web` WebGPU / WASM) and deterministic heuristic semantic analysis (`semantic-analyzer.ts`).
+             - Verify tokenizer (`tokenizer.ts`) handles subwords, ChatML formatting, and BigInt64Array token encodings safely with no memory leaks.
+             - On "Burn Local Data", verify all workers terminate, buffers are deallocated, and status is set to `terminated`.
+
+        4. STATUTORY DISPUTE STUDIO & UPL SAFE HARBORS:
+           - In `src/core/dispute-generator.ts` and `src/components/DisputeStudioModal.tsx`:
+             - Ensure generated Pre-Signing Amendment Requests and Tenancy Dispute Notices quote offending provisions, cite applicable state/federal codes, and include non-waiver reservations of rights.
+             - Verify rigorous HTML escaping and sanitization before rendering into printable HTML or writing to print windows to prevent XSS.
+             - Ensure non-waivable Unauthorized Practice of Law (UPL) legal disclaimers are prominently displayed in all generated documents and user interfaces.
+
+        5. TESTING & CLAIMS AUDITING:
+           - In `scripts/audit-claims.mjs` and `tests/unit/claims-linter.test.ts`, enforce static parity between documentation (`README.md`, `ARCHITECTURE.md`), statutory legal citations, and test inventories.
+           - Prohibit unprovable marketing adjectives ('bulletproof', 'conclusive', 'definitive', 'infinitely scalable').
+           - Verify that `KNOWTHANKYEW_PORTFOLIO_MASTER_BRIEF.md` test counts match actual test inventories.
+
+    - path: "src/core/**"
+      instructions: "Audit core parsing, normalization, segmentation, rule evaluation, and dispute letter generation for ReDoS safety, memory disposal, and zero network leakage."
+
+    - path: "src/core/edge-inference/**"
+      instructions: "Audit Web Worker execution, ONNX runtime initialization, WASM fallback, BigInt64Array tokenizer handling, and memory teardown."
+
+    - path: "src/components/**"
+      instructions: "Audit React components for accessible UI controls (WCAG AA), screen reader announcers, secure input handling, HTML escaping, and nuclear amnesia data burning."
+
+    - path: "policies/**"
+      instructions: "Audit statutory tenancy policy packs and schema conformance across federal and state jurisdictions."
+
+    - path: "tests/**"
+      instructions: "Audit test suites for edge-case coverage (empty texts, ReDoS immunity, edge worker termination, and claims parity)."
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "auto"
+  linked_repositories:
+    - repository: "knowthankyew/privacy-telemetry"
+      instructions: "Contains canonical zero-egress invariants, cryptographic evidence sealing standards, and privacy schemas for the KnowThankYew suite."
+    - repository: "knowthankyew/portfolio-admin"
+      instructions: "Contains portfolio integration standards, Master Brief assertions, and administrative compliance specifications."

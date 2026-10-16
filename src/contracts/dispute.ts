@@ -3,9 +3,9 @@ import { LetterType } from './enums';
 
 export interface DisputeRequest {
   jurisdiction: string;
-  tenantName: string;
-  landlordName: string;
-  propertyAddress: string;
+  tenantName?: string;
+  landlordName?: string;
+  propertyAddress?: string;
   letterType: LetterType;
   flaggedClauses: Clause[];
 }

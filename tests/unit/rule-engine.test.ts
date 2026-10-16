@@ -169,4 +169,26 @@ describe('RuleEvaluationEngine', () => {
     expect(result.clauses[0].statuteCitation).toContain('92.0081');
     expect(result.clauses[0].statuteCitation).toContain('92.008');
   });
+
+  it('resilience: handles empty clause lists and unknown jurisdictions safely', () => {
+    const emptyResult = engine.evaluate([], 'UNKNOWN_JUR');
+    expect(emptyResult.jurisdiction).toBe('UNKNOWN_JUR');
+    expect(emptyResult.summary.totalClauses).toBe(0);
+    expect(emptyResult.summary.riskLevel).toBe('Low');
+    expect(emptyResult.clauses).toEqual([]);
+  });
+
+  it('resilience: safely processes clauses with missing optional fields without crashing', () => {
+    const minimalClause: Clause = {
+      id: 'clause-min',
+      rawText: 'Tenant agrees to waive all implied warranties of habitability under California law.',
+      category: 'General',
+      status: 'Standard'
+    };
+
+    const result = engine.evaluate([minimalClause], 'CA');
+    expect(result.clauses[0].status).toBe('LikelyUnenforceable');
+    expect(result.clauses[0].disputeRecommendation).toBeTruthy();
+    expect(result.clauses[0].category).toBe('HabitabilityRepairs');
+  });
 });

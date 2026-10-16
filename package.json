@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "validate:policies": "node scripts/validate-policies.mjs"
+    "validate:policies": "node scripts/validate-policies.mjs",
+    "audit:claims": "node scripts/audit-claims.mjs"
   },
   "dependencies": {
     "@knowthankyew/privacy-telemetry": "file:../privacy-telemetry/packages/privacy-telemetry",

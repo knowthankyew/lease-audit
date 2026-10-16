@@ -11,6 +11,15 @@ interface DisputeStudioModalProps {
   onCopySuccess: () => void;
 }
 
+function escapeHtml(str: string): string {
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export const DisputeStudioModal: React.FC<DisputeStudioModalProps> = ({
   isOpen,
   onClose,
@@ -63,11 +72,13 @@ export const DisputeStudioModal: React.FC<DisputeStudioModalProps> = ({
   const handlePrint = () => {
     const printWin = window.open('', '_blank');
     if (!printWin) return;
+    const safeTitle = escapeHtml(`Lease Statutory Notice - ${tenantName}`);
+    const safeContent = escapeHtml(disputeResult.letterPlaintext);
     printWin.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Lease Statutory Notice - ${tenantName}</title>
+        <title>${safeTitle}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; padding: 40px; color: #111; max-width: 800px; margin: 0 auto; }
           h1, h2, h3, h4 { color: #000; margin-top: 1.5em; margin-bottom: 0.5em; }
@@ -76,7 +87,7 @@ export const DisputeStudioModal: React.FC<DisputeStudioModalProps> = ({
         </style>
       </head>
       <body>
-        <pre style="white-space: pre-wrap; font-family: inherit;">${disputeResult.letterPlaintext}</pre>
+        <pre style="white-space: pre-wrap; font-family: inherit;">${safeContent}</pre>
       </body>
       </html>
     `);

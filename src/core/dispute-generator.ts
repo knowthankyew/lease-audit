@@ -76,9 +76,10 @@ export class DisputeLetterGenerator {
         statutes.add(citation);
 
         const title = clause.title ?? `Clause ${clause.sectionNumber ?? clause.id}`;
-        const rawQuote = clause.rawText.length > 200
-          ? clause.rawText.substring(0, 197) + '...'
-          : clause.rawText;
+        const quoteText = clause.rawText ?? '';
+        const rawQuote = quoteText.length > 200
+          ? quoteText.substring(0, 197) + '...'
+          : quoteText;
 
         // Markdown
         mdLines.push(`#### ${itemIndex}. ${title} (${citation})`);

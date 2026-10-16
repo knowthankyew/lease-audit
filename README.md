@@ -122,7 +122,7 @@ Tests cover:
 - Full statutory citation verification (ensuring all 29 rules have official legal citations and valid regex patterns).
 - High-risk clause detection for California, New York, Texas, Florida, Illinois, and Federal rules.
 - Dispute letter generation for pre-signing amendment requests and active tenancy notices.
-- **Client-Side Edge ML Scaffold & In-Browser ONNX Runtime (Phase 3a & 3b):** Web Worker off-main-thread execution, autoregressive ONNX neural token generation with WebGPU/WASM, ChatML tokenization, heuristic fallback analyzer, and Pillar 1 hard burn memory teardown (55/55 tests passing).
+- **Client-Side Edge ML Scaffold & In-Browser ONNX Runtime (Phase 3a & 3b):** Web Worker off-main-thread execution, autoregressive ONNX neural token generation with WebGPU/WASM, ChatML tokenization, heuristic fallback analyzer, and Pillar 1 hard burn memory teardown (64/64 tests passing).
 
 ---
 

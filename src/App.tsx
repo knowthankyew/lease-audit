@@ -159,6 +159,24 @@ export const App: React.FC = () => {
     clearHandoff();
     telemetry.burn();
     edgeService.burn();
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        window.caches.keys().then((keys) => {
+          keys.forEach((k) => window.caches.delete(k));
+        });
+      }
+      if (typeof window !== 'undefined' && 'indexedDB' in window && typeof indexedDB.databases === 'function') {
+        indexedDB.databases().then((dbs) => {
+          for (const db of dbs) {
+            if (db.name) indexedDB.deleteDatabase(db.name);
+          }
+        });
+      }
+    } catch {
+      // storage clear best-effort in sandbox/isolated environments
+    }
     setRawText('');
     setAuditResult(null);
     setSelectedClauseIds(new Set());

@@ -130,7 +130,7 @@ export class RuleEvaluationEngine {
 
       const clauseIdentifier = clause.sectionNumber ?? clause.id;
       const recommendations = Array.from(
-        new Set(topRules.map((r) => r.disputeTemplate.replaceAll('{clauseNumber}', clauseIdentifier)))
+        new Set(topRules.map((r) => (r.disputeTemplate ?? '').replaceAll('{clauseNumber}', clauseIdentifier)))
       );
       clause.disputeRecommendation = recommendations.join(' ');
 

@@ -153,7 +153,7 @@ Features:
 
 ## 7. Testing & Quality Assurance
 
-- **Vitest Unit Test Suite (`npm test`)**: 23 automated tests covering text normalization, clause segmentation, rule evaluation, dispute letter generation, and statutory citation validation.
+- **Vitest Unit Test Suite (`npm test`)**: 64 automated tests covering text normalization, clause segmentation, rule evaluation, dispute letter generation, statutory citation validation, claims linting, and in-browser edge ONNX inference.
 - **TypeScript Static Verification (`npx tsc --noEmit`)**: Strict type checking with zero errors.
 - **Vite Production Build (`npm run build`)**: Bundles minified assets into `dist/`.
 - **Zero Runtime Prerequisites**: Runs on any modern web browser via Node.js 18+.

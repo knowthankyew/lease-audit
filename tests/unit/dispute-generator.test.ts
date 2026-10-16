@@ -97,4 +97,19 @@ describe('DisputeLetterGenerator', () => {
     expect(result.letterMarkdown).toContain('> "No prior notice required under any circumstance."');
     expect(result.letterMarkdown).toContain('Reservation of Rights');
   });
+
+  it('resilience: handles empty requests and missing clause fields without throwing', () => {
+    const emptyRequest: DisputeRequest = {
+      jurisdiction: 'CA',
+      letterType: 'PreSigning',
+      flaggedClauses: []
+    };
+
+    const result = generator.generateLetter(emptyRequest);
+    expect(result.letterPlaintext).toContain('[Tenant Name]');
+    expect(result.letterPlaintext).toContain('[Landlord / Property Management]');
+    expect(result.letterPlaintext).toContain('[Rental Property Address]');
+    expect(result.letterPlaintext).toContain('[No specific statutory violations were selected for inclusion.]');
+    expect(result.statutesCited).toEqual([]);
+  });
 });
