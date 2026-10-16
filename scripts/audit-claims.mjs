@@ -18,7 +18,7 @@
  */
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -70,26 +70,32 @@ const REQUIRED_STATUTES = [
  * Audit 1: Zero-Egress & Air-Gapped Privacy Invariants
  */
 export function auditZeroEgress(errors = []) {
-  // Check index.html CSP
+  // Check index.html CSP tag directly, ignoring comments
   const indexPath = resolve(REPO_ROOT, 'index.html');
   if (!existsSync(indexPath)) {
     errors.push('Missing index.html file');
   } else {
-    const indexContent = readFileSync(indexPath, 'utf-8');
-    const connectMatch = indexContent.match(/connect-src\s+([^;"]+)/);
-    if (!connectMatch) {
-      errors.push('index.html CSP violation: Missing connect-src directive');
+    const rawIndex = readFileSync(indexPath, 'utf-8');
+    const indexContent = rawIndex.replace(/<!--[\s\S]*?-->/g, '');
+    const metaCspMatch =
+      indexContent.match(/<meta\s+[^>]*http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*content\s*=\s*(["'])([\s\S]*?)\1[^>]*>/i) ||
+      indexContent.match(/<meta\s+[^>]*content\s*=\s*(["'])([\s\S]*?)\1[^>]*http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/i);
+
+    if (!metaCspMatch) {
+      errors.push('index.html CSP violation: Missing active <meta http-equiv="Content-Security-Policy"> tag');
     } else {
-      const allowedConnect = connectMatch[1];
-      const tokens = allowedConnect.split(/\s+/).filter(Boolean);
-      for (const token of tokens) {
-        if (
-          token !== "'self'" &&
-          !token.startsWith('http://localhost') &&
-          !token.startsWith('http://127.0.0.1') &&
-          !token.startsWith('http://otel-collector')
-        ) {
-          errors.push(`index.html CSP violation: Unauthorized remote connect-src token detected: ${token}`);
+      const cspDirectives = metaCspMatch[2].split(';').map((d) => d.trim()).filter(Boolean);
+      const connectDirective = cspDirectives.find((d) => /^connect-src\b/i.test(d));
+      if (!connectDirective) {
+        errors.push('index.html CSP violation: Missing connect-src directive in Content-Security-Policy');
+      } else {
+        const tokens = connectDirective.replace(/^connect-src\s+/i, '').split(/\s+/).filter(Boolean);
+        for (const token of tokens) {
+          if (token === "'self'") continue;
+          const urlMatch = token.match(/^http:\/\/(localhost|127\.0\.0\.1|otel-collector)(?::(?:\*|\d+))?$/);
+          if (!urlMatch) {
+            errors.push(`index.html CSP violation: Unauthorized remote connect-src token detected: ${token}`);
+          }
         }
       }
     }
@@ -104,16 +110,25 @@ export function auditZeroEgress(errors = []) {
       if (entry.isDirectory()) {
         scanFiles(fullPath);
       } else if (/\.(ts|tsx|js|mjs)$/.test(entry.name)) {
-        const relPath = fullPath.replace(REPO_ROOT + '/', '');
-        const content = readFileSync(fullPath, 'utf-8');
-        const lines = content.split('\n');
+        const relPath = relative(REPO_ROOT, fullPath).split(sep).join('/');
+        const rawContent = readFileSync(fullPath, 'utf-8');
+        // Strip block comments while preserving newlines for accurate line numbers
+        const noBlockComments = rawContent.replace(/\/\*[\s\S]*?\*\//g, (match) => {
+          const newlines = match.match(/\n/g);
+          return newlines ? newlines.join('') : '';
+        });
+        const lines = noBlockComments.split('\n');
         lines.forEach((line, lineIdx) => {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) {
+          const trimmed = line.replace(/\/\/.*$/, '').trim();
+          if (!trimmed) {
             return;
           }
 
-          if (/\b(fetch\s*\(|XMLHttpRequest|navigator\.sendBeacon|new\s+WebSocket)\b/.test(line)) {
+          if (
+            /(?:\bfetch\s*\(|\b(?:XMLHttpRequest|axios)\b|\[\s*['"`](?:fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|axios)['"`]\s*\]|\bnavigator\s*(?:\.\s*sendBeacon|\[\s*['"`]sendBeacon['"`]\s*\])|\bnew\s+(?:WebSocket|EventSource)\b|\bimport\s*\()/.test(
+              trimmed
+            )
+          ) {
             errors.push(`Privacy violation in ${relPath}:${lineIdx + 1}: Unauthorized network primitive detected: ${trimmed}`);
           }
         });
@@ -134,6 +149,16 @@ export function auditZeroEgress(errors = []) {
       if (telContent.includes(`'${key}'`)) {
         errors.push(`Privacy violation in telemetry.ts: Prohibited PII attribute key detected in allowlist: '${key}'`);
       }
+    }
+
+    if (!/new\s+MemoryExporter\s*\(/.test(telContent)) {
+      errors.push('Privacy violation in telemetry.ts: MemoryExporter must be instantiated as the default exporter');
+    }
+    if (!telContent.includes("mode: 'memory_only'")) {
+      errors.push("Privacy violation in telemetry.ts: Default mode must be explicitly 'memory_only'");
+    }
+    if (!telContent.includes("serviceName: 'lease-audit'")) {
+      errors.push("Privacy violation in telemetry.ts: Default serviceName must be 'lease-audit'");
     }
   }
 }
@@ -187,7 +212,17 @@ export function auditVocabulary(errors = []) {
     const lines = readFileSync(docPath, 'utf-8').split('\n');
     lines.forEach((line, idx) => {
       const lower = line.toLowerCase();
-      if (lower.includes('prohibits unprovable') || lower.includes('prohibited word') || lower.includes('prohibited marketing')) {
+      const trimmed = line.trim();
+      if (
+        trimmed.startsWith('#') &&
+        (lower.includes('prohibited marketing') || lower.includes('vocabulary guardrail'))
+      ) {
+        return;
+      }
+      if (
+        trimmed.startsWith('|') &&
+        lower.includes('prohibits unprovable')
+      ) {
         return;
       }
       for (const pattern of PROHIBITED_WORDS) {
@@ -279,11 +314,16 @@ export function auditPolicyPacks(errors = []) {
 /**
  * Audit 5: Portfolio Master Brief Parity
  */
-export function auditPortfolioMasterBrief(errors = [], { requireBrief = false } = {}) {
-  const briefCandidates = [
-    resolve(DEV_ROOT, 'KNOWTHANKYEW_PORTFOLIO_MASTER_BRIEF.md'),
-    resolve(REPO_ROOT, 'KNOWTHANKYEW_PORTFOLIO_MASTER_BRIEF.md'),
-  ];
+export function auditPortfolioMasterBrief(
+  errors = [],
+  { requireBrief = false, overrideBriefPath = null } = {}
+) {
+  const briefCandidates = overrideBriefPath
+    ? [overrideBriefPath]
+    : [
+        resolve(DEV_ROOT, 'KNOWTHANKYEW_PORTFOLIO_MASTER_BRIEF.md'),
+        resolve(REPO_ROOT, 'KNOWTHANKYEW_PORTFOLIO_MASTER_BRIEF.md'),
+      ];
   const briefPath = briefCandidates.find((p) => existsSync(p));
 
   if (!briefPath) {
@@ -307,22 +347,30 @@ export function auditPortfolioMasterBrief(errors = [], { requireBrief = false } 
     const testFiles = readdirSync(testsDir).filter((f) => f.endsWith('.test.ts') || f.endsWith('.test.js'));
     for (const file of testFiles) {
       const code = readFileSync(resolve(testsDir, file), 'utf-8');
-      const itMatches = code.match(/\bit(?:\.only|\.skip)?\s*\(/g) || [];
-      const itEachMatches = code.match(/\bit\.each\s*\([^)]*\)\s*\([^,]+,\s*(?:\([^)]*\)|[a-zA-Z0-9_]+)\s*=>/g) || [];
-
-      // Note: for tests using it.each(array), count the items if static or standard
-      if (file === 'statute-verification.test.ts') {
-        // statute-verification has it.each(requiredJurisdictions) with 6 items
-        actualCount += 6;
-      } else {
-        actualCount += itMatches.length;
+      let count = 0;
+      const itEachRegex = /\b(?:it|test)\.each\s*\(\s*(?:\[([^\]]*)\]|([a-zA-Z0-9_]+))\s*\)/g;
+      let m;
+      while ((m = itEachRegex.exec(code)) !== null) {
+        if (m[1]) {
+          count += m[1].split(',').map((s) => s.trim()).filter(Boolean).length;
+        } else if (m[2]) {
+          const varName = m[2];
+          const declMatch = code.match(new RegExp(`(?:const|let|var)\\s+${varName}\\s*=\\s*\\[([^\\]]*)\\]`));
+          if (declMatch) {
+            count += declMatch[1].split(',').map((s) => s.trim()).filter(Boolean).length;
+          }
+        }
       }
+      const codeWithoutEach = code.replace(/\b(?:it|test)\.each\s*\([^)]*\)/g, '');
+      const standardMatches = codeWithoutEach.match(/(?<![\.\$a-zA-Z0-9_])(?:it|test)(?:\.only|\.skip)?\s*\(/g) || [];
+      count += standardMatches.length;
+      actualCount += count;
     }
   }
 
   if (documentedCount !== actualCount) {
     errors.push(
-      `Portfolio Brief Drift: KNOWTHANKYEW_PORTFOLIO_MASTER_BRIEF.md documents ${documentedCount}/${documentedCount} tests, but actual test suite has ${actualCount} tests.`
+      `Portfolio Brief Drift: KNOWTHANKYEW_PORTFOLIO_MASTER_BRIEF.md documents ${match[1]}/${match[2]} tests, but actual test suite has ${actualCount} tests.`
     );
     return false;
   }

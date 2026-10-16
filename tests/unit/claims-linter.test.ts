@@ -35,9 +35,17 @@ describe('LeaseAudit Claims & Privacy Invariant Linter (claims-linter.test.ts)',
 
   it('verifies Portfolio Master Brief parity if brief is present', () => {
     const errors: string[] = [];
-    const checked = auditPortfolioMasterBrief(errors);
-    if (checked) {
-      expect(errors).toEqual([]);
-    }
+    auditPortfolioMasterBrief(errors, { requireBrief: false });
+    expect(errors).toEqual([]);
+  });
+
+  it('fails if Portfolio Master Brief is required but missing', () => {
+    const errors: string[] = [];
+    auditPortfolioMasterBrief(errors, {
+      requireBrief: true,
+      overrideBriefPath: '/non-existent/path/BRIEF.md',
+    });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('not found but required via --require-brief');
   });
 });
