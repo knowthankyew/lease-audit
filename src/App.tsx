@@ -155,35 +155,81 @@ export const App: React.FC = () => {
     }
   };
 
-  const handlePurgeData = () => {
+  const handlePurgeData = async () => {
     clearHandoff();
     telemetry.burn();
     edgeService.burn();
+
+    let purgeFailed = false;
+
     try {
       localStorage.clear();
-      sessionStorage.clear();
-      if (typeof window !== 'undefined' && 'caches' in window) {
-        window.caches.keys().then((keys) => {
-          keys.forEach((k) => window.caches.delete(k));
-        });
-      }
-      if (typeof window !== 'undefined' && 'indexedDB' in window && typeof indexedDB.databases === 'function') {
-        indexedDB.databases().then((dbs) => {
-          for (const db of dbs) {
-            if (db.name) indexedDB.deleteDatabase(db.name);
-          }
-        });
-      }
     } catch {
-      // storage clear best-effort in sandbox/isolated environments
+      purgeFailed = true;
     }
+
+    try {
+      sessionStorage.clear();
+    } catch {
+      purgeFailed = true;
+    }
+
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      try {
+        const keys = await window.caches.keys();
+        const results = await Promise.allSettled(keys.map((k) => window.caches.delete(k)));
+        if (results.some((r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value))) {
+          purgeFailed = true;
+        }
+      } catch {
+        purgeFailed = true;
+      }
+    }
+
+    if (
+      typeof window !== 'undefined' &&
+      'indexedDB' in window &&
+      typeof indexedDB.databases === 'function'
+    ) {
+      try {
+        const dbs = await indexedDB.databases();
+        const deletionPromises = dbs
+          .map((db) => db.name)
+          .filter((name): name is string => typeof name === 'string' && name.length > 0)
+          .map(
+            (name) =>
+              new Promise<void>((resolve, reject) => {
+                try {
+                  const req = indexedDB.deleteDatabase(name);
+                  req.onsuccess = () => resolve();
+                  req.onerror = () => reject(req.error || new Error(`Failed to delete database ${name}`));
+                  req.onblocked = () => resolve();
+                } catch (err) {
+                  reject(err);
+                }
+              })
+          );
+        const idbResults = await Promise.allSettled(deletionPromises);
+        if (idbResults.some((r) => r.status === 'rejected')) {
+          purgeFailed = true;
+        }
+      } catch {
+        purgeFailed = true;
+      }
+    }
+
     setRawText('');
     setAuditResult(null);
     setSelectedClauseIds(new Set());
     setSemanticResults(new Map());
     setStreamingTokens(new Map());
     setScenarioId('custom');
-    showToast('🔥 All local lease data, edge ML memory & telemetry wiped from memory.');
+
+    if (purgeFailed) {
+      showToast('⚠️ Storage wipe partially completed (some browser stores were restricted).');
+    } else {
+      showToast('🔥 All local lease data, edge ML memory & telemetry wiped from memory.');
+    }
   };
 
   const runSemanticAudit = useCallback(async () => {

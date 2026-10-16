@@ -20,6 +20,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -69,14 +70,23 @@ const REQUIRED_STATUTES = [
 /**
  * Audit 1: Zero-Egress & Air-Gapped Privacy Invariants
  */
-export function auditZeroEgress(errors = []) {
+export function auditZeroEgress(
+  errors = [],
+  { overrideIndexContent = null, overrideCodeSnippets = null } = {}
+) {
   // Check index.html CSP tag directly, ignoring comments
   const indexPath = resolve(REPO_ROOT, 'index.html');
-  if (!existsSync(indexPath)) {
+  const indexContentRaw =
+    overrideIndexContent !== null
+      ? overrideIndexContent
+      : existsSync(indexPath)
+      ? readFileSync(indexPath, 'utf-8')
+      : null;
+
+  if (indexContentRaw === null) {
     errors.push('Missing index.html file');
   } else {
-    const rawIndex = readFileSync(indexPath, 'utf-8');
-    const indexContent = rawIndex.replace(/<!--[\s\S]*?-->/g, '');
+    const indexContent = indexContentRaw.replace(/<!--[\s\S]*?-->/g, '');
     const metaCspMatch =
       indexContent.match(/<meta\s+[^>]*http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*content\s*=\s*(["'])([\s\S]*?)\1[^>]*>/i) ||
       indexContent.match(/<meta\s+[^>]*content\s*=\s*(["'])([\s\S]*?)\1[^>]*http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/i);
@@ -99,6 +109,17 @@ export function auditZeroEgress(errors = []) {
         }
       }
     }
+  }
+
+  const networkPrimitiveRegex =
+    /(?:\b(?:fetch|\??\.\s*fetch)\s*\(|=\s*fetch\b|\b(?:XMLHttpRequest|axios)\b|\[\s*['"`](?:fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|axios)['"`]\s*\]|\bnavigator\s*(?:\??\.\s*sendBeacon|\[\s*['"`]sendBeacon['"`]\s*\])|\bnew\s+(?:WebSocket|EventSource)\b|\bimport\s*\()/;
+
+  if (Array.isArray(overrideCodeSnippets)) {
+    overrideCodeSnippets.forEach((snippet, idx) => {
+      if (networkPrimitiveRegex.test(snippet)) {
+        errors.push(`Privacy violation in snippet ${idx + 1}: Unauthorized network primitive detected: ${snippet}`);
+      }
+    });
   }
 
   // Scan src/ for unauthorized network primitives
@@ -124,11 +145,7 @@ export function auditZeroEgress(errors = []) {
             return;
           }
 
-          if (
-            /(?:\bfetch\s*\(|\b(?:XMLHttpRequest|axios)\b|\[\s*['"`](?:fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|axios)['"`]\s*\]|\bnavigator\s*(?:\.\s*sendBeacon|\[\s*['"`]sendBeacon['"`]\s*\])|\bnew\s+(?:WebSocket|EventSource)\b|\bimport\s*\()/.test(
-              trimmed
-            )
-          ) {
+          if (networkPrimitiveRegex.test(trimmed)) {
             errors.push(`Privacy violation in ${relPath}:${lineIdx + 1}: Unauthorized network primitive detected: ${trimmed}`);
           }
         });
@@ -136,7 +153,7 @@ export function auditZeroEgress(errors = []) {
     }
   }
 
-  if (existsSync(srcDir)) {
+  if (overrideCodeSnippets === null && existsSync(srcDir)) {
     scanFiles(srcDir);
   }
 
@@ -227,7 +244,7 @@ export function auditVocabulary(errors = []) {
       }
       for (const pattern of PROHIBITED_WORDS) {
         if (pattern.test(line)) {
-          errors.push(`Prohibited marketing word '${pattern.source}' found in ${docPath.replace(REPO_ROOT + '/', '')}:${idx + 1}: ${line.trim()}`);
+          errors.push(`Prohibited marketing word '${pattern.source}' found in ${relative(REPO_ROOT, docPath)}:${idx + 1}: ${line.trim()}`);
         }
       }
     });
@@ -341,30 +358,34 @@ export function auditPortfolioMasterBrief(
   }
 
   const documentedCount = parseInt(match[1], 10);
-  const testsDir = resolve(REPO_ROOT, 'tests/unit');
+  const vitestReportPath = resolve(REPO_ROOT, '.vitest/json/output.json');
   let actualCount = 0;
-  if (existsSync(testsDir)) {
-    const testFiles = readdirSync(testsDir).filter((f) => f.endsWith('.test.ts') || f.endsWith('.test.js'));
-    for (const file of testFiles) {
-      const code = readFileSync(resolve(testsDir, file), 'utf-8');
-      let count = 0;
-      const itEachRegex = /\b(?:it|test)\.each\s*\(\s*(?:\[([^\]]*)\]|([a-zA-Z0-9_]+))\s*\)/g;
-      let m;
-      while ((m = itEachRegex.exec(code)) !== null) {
-        if (m[1]) {
-          count += m[1].split(',').map((s) => s.trim()).filter(Boolean).length;
-        } else if (m[2]) {
-          const varName = m[2];
-          const declMatch = code.match(new RegExp(`(?:const|let|var)\\s+${varName}\\s*=\\s*\\[([^\\]]*)\\]`));
-          if (declMatch) {
-            count += declMatch[1].split(',').map((s) => s.trim()).filter(Boolean).length;
-          }
+
+  if (existsSync(vitestReportPath)) {
+    try {
+      const data = JSON.parse(readFileSync(vitestReportPath, 'utf-8'));
+      if (typeof data.numTotalTests === 'number') {
+        actualCount = data.numTotalTests;
+      }
+    } catch {
+      // Ignored: fallback below
+    }
+  }
+
+  if (actualCount === 0) {
+    try {
+      execSync('npx vitest run --reporter=json --outputFile.json=.vitest/json/output.json', {
+        cwd: REPO_ROOT,
+        stdio: 'pipe',
+      });
+      if (existsSync(vitestReportPath)) {
+        const data = JSON.parse(readFileSync(vitestReportPath, 'utf-8'));
+        if (typeof data.numTotalTests === 'number') {
+          actualCount = data.numTotalTests;
         }
       }
-      const codeWithoutEach = code.replace(/\b(?:it|test)\.each\s*\([^)]*\)/g, '');
-      const standardMatches = codeWithoutEach.match(/(?<![\.\$a-zA-Z0-9_])(?:it|test)(?:\.only|\.skip)?\s*\(/g) || [];
-      count += standardMatches.length;
-      actualCount += count;
+    } catch {
+      // Ignored
     }
   }
 
