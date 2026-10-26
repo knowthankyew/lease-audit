@@ -21,6 +21,25 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
+import {
+  stripLineComment,
+  stripBlockComments,
+  FORBIDDEN_NETWORK_REGEX,
+  testNetworkPrimitive,
+  scanSourceForNetworkPrimitives,
+  scanDocumentationForVocabulary,
+  BANNED_VOCABULARY,
+} from './claims-linter-core.mjs';
+
+export {
+  stripLineComment,
+  stripBlockComments,
+  FORBIDDEN_NETWORK_REGEX,
+  testNetworkPrimitive,
+  scanSourceForNetworkPrimitives,
+  scanDocumentationForVocabulary,
+  BANNED_VOCABULARY,
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -123,7 +142,7 @@ export function auditZeroEgress(
 
   if (Array.isArray(overrideCodeSnippets)) {
     overrideCodeSnippets.forEach((snippet, idx) => {
-      if (networkPrimitiveRegex.test(snippet)) {
+      if (testNetworkPrimitive(snippet)) {
         errors.push(`Privacy violation in snippet ${idx + 1}: Unauthorized network primitive detected: ${snippet}`);
       }
     });
@@ -140,22 +159,8 @@ export function auditZeroEgress(
       } else if (/\.(ts|tsx|js|mjs)$/.test(entry.name)) {
         const relPath = relative(REPO_ROOT, fullPath).split(sep).join('/');
         const rawContent = readFileSync(fullPath, 'utf-8');
-        // Strip block comments while preserving newlines for accurate line numbers
-        const noBlockComments = rawContent.replace(/\/\*[\s\S]*?\*\//g, (match) => {
-          const newlines = match.match(/\n/g);
-          return newlines ? newlines.join('') : '';
-        });
-        const lines = noBlockComments.split('\n');
-        lines.forEach((line, lineIdx) => {
-          const trimmed = line.replace(/\/\/.*$/, '').trim();
-          if (!trimmed) {
-            return;
-          }
-
-          if (networkPrimitiveRegex.test(trimmed)) {
-            errors.push(`Privacy violation in ${relPath}:${lineIdx + 1}: Unauthorized network primitive detected: ${trimmed}`);
-          }
-        });
+        const fileErrors = scanSourceForNetworkPrimitives(rawContent, relPath);
+        errors.push(...fileErrors);
       }
     }
   }
