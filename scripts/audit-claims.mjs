@@ -109,10 +109,15 @@ export function auditZeroEgress(
         }
       }
     }
+    // Prohibit remote script, link stylesheet, or image tags in index.html
+    const remoteTagMatch = indexContent.match(/<(?:script|link|img)\s+[^>]*(?:src|href)\s*=\s*["']https?:\/\//i);
+    if (remoteTagMatch) {
+      errors.push(`index.html security violation: Remote asset tag detected in index.html: ${remoteTagMatch[0]}`);
+    }
   }
 
   const networkPrimitiveRegex =
-    /(?:\b(?:fetch|\??\.\s*fetch)\s*\(|=\s*fetch\b|\b(?:XMLHttpRequest|axios)\b|\[\s*['"`](?:fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|axios)['"`]\s*\]|\bnavigator\s*(?:\??\.\s*sendBeacon|\[\s*['"`]sendBeacon['"`]\s*\])|\bnew\s+(?:WebSocket|EventSource)\b|\bimport\s*\()/;
+    /(?:\b(?:fetch|\??\.\s*fetch)\s*\(|=\s*fetch\b|\b(?:XMLHttpRequest|axios)\b|\[\s*['"`](?:fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|axios)['"`]\s*\]|\bnavigator\s*(?:\??\.\s*sendBeacon|\[\s*['"`]sendBeacon['"`]\s*\])|\bnew\s+(?:WebSocket|EventSource|Image)\b|\b(?:window|globalThis|self)\s*(?:\.\s*fetch|\[\s*['\"`]fetch['\"`]\s*\])|\bimport\s*\()/;
 
   if (Array.isArray(overrideCodeSnippets)) {
     overrideCodeSnippets.forEach((snippet, idx) => {
@@ -222,6 +227,7 @@ export function auditVocabulary(errors = []) {
     resolve(REPO_ROOT, 'src/components/Header.tsx'),
     resolve(REPO_ROOT, 'src/components/DisputeStudioModal.tsx'),
     resolve(REPO_ROOT, 'src/components/LeaseWorkbench.tsx'),
+    resolve(REPO_ROOT, 'docs/ARCHITECTURE.md'),
   ];
 
   for (const docPath of docsToCheck) {
