@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TelemetryManager } from '../../src/core/telemetry';
+import { runTelemetryInFreshRealm } from './realm-worker.mjs';
 
 describe('TelemetryManager & Privacy Invariants', () => {
   let tm: TelemetryManager;
@@ -55,33 +56,46 @@ describe('TelemetryManager & Privacy Invariants', () => {
     expect(attrs.rule_id).toBe('CA_CIV_1950_5');
     expect(attrs.flagged_count).toBe(2);
 
-    // Non-allowlisted keys are strictly redacted by default
-    expect(attrs.lease_text).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
-    expect(attrs.raw_payload).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
-    expect(attrs.matchedText).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
-    expect(attrs.excerpt).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
-    expect(attrs.snippet).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
+    // Non-allowlisted keys are strictly redacted by default without retaining key names
+    expect('lease_text' in attrs).toBe(false);
+    expect('raw_payload' in attrs).toBe(false);
+    expect('matchedText' in attrs).toBe(false);
+    expect('excerpt' in attrs).toBe(false);
+    expect('snippet' in attrs).toBe(false);
+    expect(attrs['[REDACTED_KEY]']).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
   });
 
-  it('purges all in-memory spans and session audit logs upon burn()', () => {
-    const span1 = tm.startSpan('parse_document', { doc_length: 500 });
-    span1.end('OK');
+  it('purges all in-memory spans and session audit logs upon burn()', async () => {
+    await runTelemetryInFreshRealm(`
+      const { TelemetryManager: IsolatedTelemetryManager } = telemetryMod;
+      const isolatedTm = new IsolatedTelemetryManager({
+        mode: 'memory_only',
+        otlpEndpoint: null,
+        burnEnabled: true,
+        allowRawPayloads: false,
+        auditDurable: false,
+        networkEgress: 'deny',
+      });
 
-    tm.recordAuditEvent('document_ingested', 'Ingested 500 characters', { char_count: 500 });
+      const span1 = isolatedTm.startSpan('parse_document', { doc_length: 500 });
+      span1.end('OK');
 
-    expect(tm.getMemorySpans().length).toBe(1);
-    expect(tm.getAuditLog().length).toBe(1);
+      isolatedTm.recordAuditEvent('document_ingested', 'Ingested 500 characters', { char_count: 500 });
 
-    // Invoke Burn Local Data
-    tm.burn();
+      assert.equal(isolatedTm.getMemorySpans().length, 1);
+      assert.equal(isolatedTm.getAuditLog().length, 1);
 
-    expect(tm.getMemorySpans().length).toBe(0);
-    expect(tm.getAuditLog().length).toBe(0);
+      // Invoke Burn Local Data
+      isolatedTm.burn();
 
-    // Subsequent span attempts remain no-op until restart
-    const spanAfterBurn = tm.startSpan('post_burn_op', { count: 1 });
-    spanAfterBurn.end('OK');
-    expect(tm.getMemorySpans().length).toBe(0);
+      assert.equal(isolatedTm.getMemorySpans().length, 0);
+      assert.equal(isolatedTm.getAuditLog().length, 0);
+
+      // Subsequent span attempts remain permanently no-op within this burned JS realm
+      const spanAfterBurn = isolatedTm.startSpan('post_burn_op', { count: 1 });
+      spanAfterBurn.end('OK');
+      assert.equal(isolatedTm.getMemorySpans().length, 0);
+    `);
   });
 
   it('generates downloadable session audit JSON', () => {

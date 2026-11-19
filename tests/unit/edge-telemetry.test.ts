@@ -43,11 +43,12 @@ describe('Edge ML Privacy Telemetry Invariants (Pillar 1 & Pillar 3)', () => {
     expect(attrs.device).toBe('webgpu');
     expect(attrs.risk_level).toBe('High');
 
-    // Forbidden keys MUST be fail-closed redacted
-    expect(attrs.prompt).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
-    expect(attrs.raw_clause_text).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
-    expect(attrs.completion).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
-    expect(attrs.snippet).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
+    // Forbidden keys MUST be fail-closed redacted without retaining key names
+    expect('prompt' in attrs).toBe(false);
+    expect('raw_clause_text' in attrs).toBe(false);
+    expect('completion' in attrs).toBe(false);
+    expect('snippet' in attrs).toBe(false);
+    expect(attrs['[REDACTED_KEY]']).toBe('[REDACTED_BY_DEFAULT_ALLOWLIST]');
   });
 
   it('Pillar 1: burn() immediately purges all buffered edge telemetry events', () => {

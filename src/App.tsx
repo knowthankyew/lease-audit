@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Header, GroundedSourcesModal, LeaseWorkbench, AuditScorecard, ClauseCardGrid, DisputeStudioModal, PrivacyAuditModal, HandoffBanner } from './components';
 import { ClauseSegmenter, RuleEvaluationEngine, telemetry, edgeService, SemanticAnalysisResult } from './core';
 import { AuditResult } from './contracts';
@@ -85,10 +85,25 @@ export const App: React.FC = () => {
   }, [rawText, jurisdiction, segmenter, engine, showToast]);
 
   const { payload: handoffPayload, isHandoffActive, clearHandoff } = useKTYHandoff('lease-audit');
+  const hasRunInitialAuditRef = useRef(false);
+  const toastedHandoffRef = useRef<string | null>(null);
 
-  // Run audit on mount for default CA sample and initialize edge ML
+  // Initialize edge ML listener once on mount
   useEffect(() => {
-    if (handoffPayload) {
+    edgeService.initialize().catch(console.error);
+    const unsub = edgeService.addStatusListener((status, provider) => {
+      setEdgeStatus(status);
+      setEdgeProvider(provider);
+      setEdgeThroughput(edgeService.getThroughput());
+      setModelLoaded(edgeService.isModelLoaded());
+    });
+    return () => unsub();
+  }, []);
+
+  // Reconcile initial audit vs incoming handoff payload without overwriting manual sessions
+  useEffect(() => {
+    if (isHandoffActive && handoffPayload) {
+      hasRunInitialAuditRef.current = true;
       const result = mapHandoffToLeaseAuditResult(handoffPayload, jurisdiction);
       setAuditResult(result);
       const flagged = new Set<string>();
@@ -98,35 +113,31 @@ export const App: React.FC = () => {
         }
       }
       setSelectedClauseIds(flagged);
-      showToast(`Handoff lease loaded from ${handoffPayload.domain} (${result.clauses.length} clauses).`);
-    } else {
+      const handoffKey = `${handoffPayload.scanTimestamp}:${handoffPayload.findings.length}`;
+      if (toastedHandoffRef.current !== handoffKey) {
+        toastedHandoffRef.current = handoffKey;
+        showToast(`Handoff lease loaded from ${handoffPayload.domain} (${result.clauses.length} clauses).`);
+      }
+    } else if (!hasRunInitialAuditRef.current) {
+      hasRunInitialAuditRef.current = true;
       runAudit();
     }
-
-    edgeService.initialize().catch(console.error);
-    const unsub = edgeService.addStatusListener((status, provider) => {
-      setEdgeStatus(status);
-      setEdgeProvider(provider);
-      setEdgeThroughput(edgeService.getThroughput());
-      setModelLoaded(edgeService.isModelLoaded());
-    });
-    return () => unsub();
-  }, [handoffPayload]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (handoffPayload) {
-      const result = mapHandoffToLeaseAuditResult(handoffPayload, jurisdiction);
-      setAuditResult(result);
-    }
-  }, [jurisdiction, handoffPayload]);
+  }, [jurisdiction, handoffPayload, isHandoffActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearHandoff = () => {
+    hasRunInitialAuditRef.current = true;
+    toastedHandoffRef.current = null;
     clearHandoff();
     setRawText(SAMPLE_LEASES.ca.text);
     setTimeout(() => runAudit(), 50);
   };
 
   const handleScenarioChange = (id: string) => {
+    hasRunInitialAuditRef.current = true;
+    toastedHandoffRef.current = null;
+    if (isHandoffActive) {
+      clearHandoff();
+    }
     telemetry.restartSession();
     setScenarioId(id);
     setSemanticResults(new Map());
@@ -156,6 +167,7 @@ export const App: React.FC = () => {
   };
 
   const handlePurgeData = async () => {
+    toastedHandoffRef.current = null;
     clearHandoff();
     telemetry.burn();
     edgeService.burn();
