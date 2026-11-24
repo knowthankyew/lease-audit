@@ -21,6 +21,11 @@ export default defineConfig({
     reporters: ['default', 'json'],
     outputFile: {
       json: '.vitest/json/output.json'
-    }
+    },
+    server: {
+      deps: {
+        inline: ['@knowthankyew/privacy-telemetry'],
+      },
+    },
   }
 });

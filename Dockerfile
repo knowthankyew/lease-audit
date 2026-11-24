@@ -6,8 +6,7 @@ WORKDIR /workspace
 ARG VITE_OTEL_EXPORTER_OTLP_ENDPOINT=""
 ENV VITE_OTEL_EXPORTER_OTLP_ENDPOINT=$VITE_OTEL_EXPORTER_OTLP_ENDPOINT
 
-# Copy shared library and application
-COPY privacy-telemetry/packages/privacy-telemetry /workspace/privacy-telemetry/packages/privacy-telemetry
+# Copy application
 COPY lease-audit /workspace/app
 
 WORKDIR /workspace/app
