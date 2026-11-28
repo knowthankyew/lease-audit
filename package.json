@@ -16,17 +16,17 @@
   "dependencies": {
     "@knowthankyew/policy-packs": "^1.0.2",
     "@knowthankyew/privacy-telemetry": "^1.0.2",
-    "lucide-react": "^1.46.0",
-    "onnxruntime-web": "^1.30.0",
+    "lucide-react": "^1.80.0",
+    "onnxruntime-web": "^1.31.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^6.1.1",
+    "@vitejs/plugin-react": "^6.3.0",
     "typescript": "^5.5.4",
-    "vite": "^8.3.0",
-    "vitest": "^5.0.1"
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
   }
 }
